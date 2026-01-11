@@ -1,0 +1,73 @@
+﻿<Window x:Class="Cursor_HUB_WKM.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Cursor_HUB_WKM"
+        mc:Ignorable="d"
+        Title="Cursor HUB" Height="250" Width="665"
+        WindowStartupLocation="CenterScreen"
+        AllowsTransparency="True"
+        WindowStyle="None"
+        Background="White">
+
+    <Grid>
+        <!-- HUB inteiro -->
+        <StackPanel x:Name="HubRoot">
+            <!-- Título -->
+            <StackPanel Orientation="Horizontal" Background="#23232e" Margin="20 20 20 10">
+                <Viewbox Width="52" Height="33" Margin="0 0 8 0">
+                    <Canvas Width="52" Height="33">
+                        <Path Data="M14.9998 19.0886C36.2305 -7.14948 36.2305 5.51721 33.4613 14.5648C30.6921 23.6124 48.2305 15.4696 50.9998 0.088623"
+                              Stroke="#FF4141"/>
+                        <Path Data="M7.05344 26.4504C6.80471 26.4974 6.5478 26.4743 6.31149 26.3835C6.07518 26.2927 5.86882 26.138 5.71552 25.9365C5.56222 25.7351 5.46805 25.4949 5.44355 25.243C5.41905 24.991 5.46519 24.7372 5.57681 24.51L11.5902 12.2782C12.1672 11.1037 13.9099 11.3402 14.153 12.626L15.1524 17.9123C15.1911 18.1176 15.2764 18.3112 15.4018 18.4782C15.5272 18.6452 15.6893 18.7812 15.8756 18.8757L20.806 21.3643C21.9683 21.9506 21.7248 23.6779 20.4444 23.92L7.05344 26.4504Z"
+                              Fill="White"/>
+                    </Canvas>
+                </Viewbox>
+                <TextBlock Text="Cursor HUB"
+                           FontSize="24" FontWeight="Bold"
+                           VerticalAlignment="Center"
+                           Foreground="White"/>
+            </StackPanel>
+
+            <!-- Conteúdo principal -->
+            <Border Background="#F9F9F9" CornerRadius="10" Padding="20" BorderBrush="#DDD" BorderThickness="1" Margin="20">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Coluna esquerda -->
+                    <StackPanel x:Name="HubUI" Grid.Column="0" Margin="0 0 20 0">
+                        <TextBlock Text="Escolha seu PNG:" FontWeight="Bold"/>
+                        <StackPanel Orientation="Horizontal" Margin="0 5 0 15">
+                            <TextBox x:Name="txtPngPath" Width="250" IsReadOnly="True" Margin="0 0 10 0"/>
+                            <Button Content="Escolher PNG" Width="100" Click="BtnChoosePng_Click"/>
+                        </StackPanel>
+
+                        <TextBlock Text="Tamanho do rastro:" FontWeight="Bold"/>
+                        <StackPanel Orientation="Horizontal">
+                            <Slider x:Name="trailSizeSlider" Minimum="8" Maximum="128" Value="32"
+                                    Width="200" TickFrequency="8" IsSnapToTickEnabled="True"
+                                    ValueChanged="TrailSizeSlider_ValueChanged"/>
+                            <TextBlock x:Name="trailSizeLabel" Text="32 px" Margin="10 0 0 0"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Coluna direita -->
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <Button x:Name="btnToggleTrail" Content="Ativar Rastro"
+                                Width="150" Height="40" Click="BtnToggleTrail_Click"
+                                Background="#007ACC" Foreground="White" FontWeight="Bold"/>
+                        <TextBlock Text="Atalho: Ctrl+Shift+X para desativar"
+                                   Margin="0 10 0 0" Foreground="Gray" FontWeight="Bold"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </StackPanel>
+
+        <!-- Canvas Overlay por cima -->
+        <Canvas x:Name="OverlayCanvas" IsHitTestVisible="False" Visibility="Collapsed"/>
+    </Grid>
+</Window>
