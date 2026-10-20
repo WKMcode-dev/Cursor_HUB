@@ -34,6 +34,38 @@ uint center = pixels[32 * 64 + 32];
 Check((center >> 24) is >= 126 and <= 128, "alfa por pixel");
 Check(((center >> 16) & 255) <= (center >> 24), "cor pre-multiplicada");
 
+// Compare the optimized rasterizer to the original source-over formula,
+// including fractional coordinates, clipped edges, and overlapping particles.
+static void ReferenceCircle(Span<uint> buffer, int stride, int width, int height, float x, float y, float radius, byte r, byte g, byte b, float alpha)
+{
+    for (int py = 0; py < height; py++)
+    for (int px = 0; px < width; px++)
+    {
+        float dx = px + .5f - x, dy = py + .5f - y;
+        float coverage = Math.Clamp(radius + .5f - MathF.Sqrt(dx * dx + dy * dy), 0, 1);
+        int a = (int)(Math.Clamp(alpha, 0, 1) * coverage * 255);
+        if (a == 0) continue;
+        int index = py * stride + px; uint dst = buffer[index]; int inv = 255 - a;
+        uint blue = (uint)((b * a + (dst & 255) * inv) / 255);
+        uint green = (uint)((g * a + ((dst >> 8) & 255) * inv) / 255);
+        uint red = (uint)((r * a + ((dst >> 16) & 255) * inv) / 255);
+        uint outAlpha = (uint)(a + ((dst >> 24) * inv) / 255);
+        buffer[index] = blue | (green << 8) | (red << 16) | (outAlpha << 24);
+    }
+}
+var expectedPixels = new uint[64 * 64];
+var actualPixels = new uint[64 * 64];
+var random = new Random(741);
+for (int i = 0; i < 120; i++)
+{
+    float x = (float)random.NextDouble() * 100 - 20, y = (float)random.NextDouble() * 100 - 20;
+    float radius = .2f + (float)random.NextDouble() * 24;
+    float alpha = (float)random.NextDouble();
+    ReferenceCircle(expectedPixels, 64, 64, 64, x, y, radius, 93, 211, 241, alpha);
+    CursorHub.Windows.LayeredSurface.Circle(actualPixels, 64, 64, 64, x, y, radius, 93, 211, 241, alpha);
+}
+Check(expectedPixels.SequenceEqual(actualPixels), "rasterizador otimizado preserva cada pixel e sobreposicao");
+
 string tempDirectory = Path.Combine(Directory.GetCurrentDirectory(), "CursorHub-check-" + Guid.NewGuid().ToString("N"));
 try
 {

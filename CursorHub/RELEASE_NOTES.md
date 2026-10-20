@@ -1,18 +1,12 @@
-Versao de prototipo do novo Cursor Hub em C# e osu!framework.
+## Cursor Hub 0.4.0 — Character Chain
 
-## Como usar
+Visual inspirado nas referencias fornecidas: branco perolado, grafite e detalhes ciano/rosa/lavanda, navegacao tecnica lateral, grade com 24 posicoes por pagina e Play no recorte inferior.
 
-1. Baixe **CursorHub-0.3.4-win-x64.zip** nos assets desta release.
-2. Extraia toda a pasta e abra **CursorHub.exe**.
-3. Escolha um preset e pressione **Play**. **Stop** ou **Ctrl+Shift+X** desliga o efeito.
+- Miniaturas dos presets, selecao visual e menu lateral para Demonstrar, Editar e Excluir.
+- Previa interativa compacta na colecao e ampliada nas configuracoes.
+- Texturas compartilhadas e calculos de particulas reduzidos, mantendo o alfa e a suavizacao.
+- Presets e configuracoes existentes preservados.
 
-O pacote inclui o runtime do .NET para Windows x64: nao precisa de .NET SDK nem Visual Studio. Mantenha as DLLs e a pasta Assets junto do executavel. Os links automaticos “Source code” sao apenas codigo-fonte.
+Baixe **CursorHub-0.4.0-win-x64.zip**, extraia toda a pasta e abra **CursorHub.exe**. O runtime .NET esta incluido; nao precisa instalar SDK nem Visual Studio. Mantenha DLLs e Assets junto do executavel.
 
-## Incluido
-
-- Janela personalizada com controles em bolinhas, bordas suavizadas e Play no recorte inferior.
-- Presets com demonstracao, edicao, exclusao e persistencia local.
-- Rastro global em camada transparente, sem capturar cliques, com verificacao de visibilidade e ordem topmost.
-- Diagnostico executavel sem SDK e SHA256SUMS.txt para conferir o download.
-
-O pipeline executa os testes do nucleo e valida as dependencias do pacote. A execucao visual em navegadores e jogos requer teste no computador do usuario. Tela cheia exclusiva e restricoes de sobreposicao nao tem suporte garantido. A dependencia transitiva ImageSharp 3.1.11 ainda possui avisos conhecidos de seguranca; a migracao compativel permanece pendente.
+Play ativa o efeito global; Stop ou Ctrl+Shift+X desliga. Esta versao continua sendo um prototipo. Tela cheia exclusiva e restricoes de sobreposicao de jogos podem impedir o rastro. O pipeline verifica o nucleo, a equivalencia de pixels do rasterizador e o pacote Windows. As medicoes de desempenho em jogos e em hardware real ainda estao pendentes. Os avisos transitivos do ImageSharp 3.1.11 permanecem pendentes.

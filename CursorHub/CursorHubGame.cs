@@ -35,8 +35,9 @@ public partial class CursorHubGame : Game
     private bool enabled = true, idle;
     private double lastMovement, nextStatus;
     private System.Numerics.Vector2? lastPosition;
+    private int drawnDots;
     private int selectedRate = 60, size = 18, lifetime = 180, colourIndex;
-    private readonly Color4[] palette = { new(255, 155, 32, 255), new(69, 210, 255, 255), new(173, 110, 255, 255), new(255, 65, 65, 255) };
+    private readonly Color4[] palette = { new(44, 137, 157, 255), new(206, 93, 163, 255), new(124, 105, 183, 255), new(37, 43, 55, 255) };
     private Color4 Accent => palette[colourIndex];
 
     public override void SetHost(osu.Framework.Platform.GameHost host)
@@ -131,7 +132,8 @@ public partial class CursorHubGame : Game
         if (position is { } previewPoint)
         {
             float x = previewPoint.X * 800 / DrawWidth, y = previewPoint.Y * 500 / DrawHeight;
-            if (x < 466 || x > 752 || y < 186 || y > 359 || presetEditor.Alpha > 0 || presetMenu.Alpha > 0) position = null;
+            var bounds = previewCard;
+            if (x < bounds.X + 4 || x > bounds.X + bounds.Width - 4 || y < bounds.Y + 4 || y > bounds.Y + bounds.Height - 4 || presetEditor.Alpha > 0 || presetMenu.Alpha > 0) position = null;
         }
         bool moved = position != lastPosition;
         if (moved) lastMovement = now;
@@ -140,7 +142,8 @@ public partial class CursorHubGame : Game
         if (idle != shouldIdle) { idle = shouldIdle; ApplyRate(); }
 
         trail.Advance(enabled ? position : null, now, lifetime, Math.Max(2, size / 4f));
-        for (int i = 0; i < dots.Length; i++)
+        int visibleDots = enabled ? trail.Count : 0;
+        for (int i = 0; i < Math.Max(visibleDots, drawnDots); i++)
         {
             var dot = dots[i];
             if (!enabled || i >= trail.Count) { if (dot.Alpha != 0) dot.Alpha = 0; continue; }
@@ -151,6 +154,7 @@ public partial class CursorHubGame : Game
             dot.Colour = Accent;
             dot.Alpha = remaining * 0.65f;
         }
+        drawnDots = visibleDots;
         cursor.Alpha = enabled && position.HasValue ? 1 : 0;
         if (position is { } p)
         {
@@ -160,7 +164,7 @@ public partial class CursorHubGame : Game
         }
         if (now >= nextStatus)
         {
-            status.Text = $"{notice}  /  {(!enabled || economy && idle ? 15 : selectedRate)} Hz  /  {trail.Count} particulas";
+            status.Text = $"{(notice.Length > 52 ? notice[..51] + ".." : notice)} / {(!enabled || economy && idle ? 15 : selectedRate)} Hz";
             nextStatus = now + 500;
         }
     }

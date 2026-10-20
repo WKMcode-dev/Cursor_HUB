@@ -9,13 +9,16 @@ namespace CursorHub.Interface;
 
 public partial class HubButton : BasicButton
 {
+    private Sprite? skin;
     public HubButton()
     {
         Masking = true;
-        CornerRadius = 5;
-        BackgroundColour = new Color4(46, 49, 53, 255);
-        HoverColour = new Color4(255, 155, 32, 40);
-        FlashColour = new Color4(110, 75, 32, 255);
+        CornerRadius = 4;
+        BorderThickness = 1;
+        BorderColour = new Color4(191, 196, 206, 255);
+        BackgroundColour = new Color4(250, 251, 253, 255);
+        HoverColour = new Color4(92, 214, 227, 65);
+        FlashColour = new Color4(221, 195, 230, 255);
     }
     public Color4 TextColour { set => SpriteText.Colour = value; }
     public Texture Skin
@@ -24,14 +27,16 @@ public partial class HubButton : BasicButton
         {
             Masking = false;
             CornerRadius = 0;
+            BorderThickness = 0;
             Background.Alpha = 0;
-            Add(new Sprite { Texture = value, RelativeSizeAxes = Axes.Both, Size = osuTK.Vector2.One, Depth = 1 });
+            if (skin is null) Add(skin = new Sprite { RelativeSizeAxes = Axes.Both, Size = osuTK.Vector2.One, Depth = 1 });
+            skin.Texture = value;
         }
     }
     protected override SpriteText CreateText() => new()
     {
         Anchor = Anchor.Centre, Origin = Anchor.Centre,
-        Font = new FontUsage(size: 15), Colour = new Color4(227, 229, 232, 255)
+        Font = new FontUsage(size: 15), Colour = new Color4(30, 34, 43, 255)
     };
 }
 

@@ -91,12 +91,21 @@ internal sealed unsafe class LayeredSurface : IDisposable
     {
         int x0 = Math.Max(0, (int)MathF.Floor(x - radius - 1)), x1 = Math.Min(width - 1, (int)MathF.Ceiling(x + radius + 1));
         int y0 = Math.Max(0, (int)MathF.Floor(y - radius - 1)), y1 = Math.Min(height - 1, (int)MathF.Ceiling(y + radius + 1));
+        float opacity = Math.Clamp(alpha, 0, 1);
+        if (opacity == 0 || radius <= 0) return;
+        float outer = radius + .5f, inner = Math.Max(0, radius - .5f);
+        float outerSquared = outer * outer, innerSquared = inner * inner;
+        // The opaque interior needs no square root. Only the antialiased rim does.
         for (int py = y0; py <= y1; py++)
+        {
+        float dy = py + .5f - y, dySquared = dy * dy;
         for (int px = x0; px <= x1; px++)
         {
-            float dx = px + .5f - x, dy = py + .5f - y;
-            float coverage = Math.Clamp(radius + .5f - MathF.Sqrt(dx * dx + dy * dy), 0, 1);
-            int a = (int)(Math.Clamp(alpha, 0, 1) * coverage * 255);
+            float dx = px + .5f - x;
+            float distanceSquared = dx * dx + dySquared;
+            if (distanceSquared >= outerSquared) continue;
+            float coverage = radius >= .5f && distanceSquared <= innerSquared ? 1 : Math.Clamp(outer - MathF.Sqrt(distanceSquared), 0, 1);
+            int a = (int)(opacity * coverage * 255);
             if (a == 0) continue;
             int index = py * stride + px; uint dst = pixels[index]; int inv = 255 - a;
             uint blue = (uint)((b * a + (dst & 255) * inv) / 255);
@@ -104,6 +113,7 @@ internal sealed unsafe class LayeredSurface : IDisposable
             uint red = (uint)((r * a + ((dst >> 16) & 255) * inv) / 255);
             uint outAlpha = (uint)(a + ((dst >> 24) * inv) / 255);
             pixels[index] = blue | (green << 8) | (red << 16) | (outAlpha << 24);
+        }
         }
     }
 

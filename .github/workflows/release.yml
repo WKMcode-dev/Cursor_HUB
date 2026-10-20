@@ -41,6 +41,26 @@ jobs:
           }
           Copy-Item CursorHub/Portable/* dist/CursorHub/
           Copy-Item CursorHub/README.md dist/CursorHub/README-tecnico.md
+      - name: Verify packaged UI and desktop overlay
+        run: |
+          New-Item -ItemType Directory -Force verification | Out-Null
+          $output = Join-Path $pwd 'verification'
+          $probe = Start-Process dist/CursorHub/CursorHub.exe -ArgumentList "--verify-overlay `"$output/overlay`"" -PassThru
+          if (!$probe.WaitForExit(30000)) { $probe.Kill(); throw 'Overlay verification timed out' }
+          $overlay = Get-Content "$output/overlay/overlay-results.json" -Raw
+          Write-Output $overlay
+          if ($overlay -match 'FAIL' -or $overlay -notmatch 'PASS worker') { throw 'Overlay verification failed' }
+          $ui = Start-Process dist/CursorHub/CursorHub.exe -ArgumentList "--verify-ui `"$output/ui`"" -PassThru -RedirectStandardError "$output/ui-stderr.txt"
+          if (!$ui.WaitForExit(60000)) { $ui.Kill(); throw 'UI verification timed out' }
+          $results = Get-Content "$output/ui/results.json" -Raw
+          Write-Output $results
+          if ($results -match 'FAIL' -or $results -notmatch 'Maximizar/restaurar') { throw 'UI verification failed' }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: CursorHub-verification
+          path: verification/
+          retention-days: 14
       - name: Package and checksum
         run: |
           New-Item -ItemType Directory -Force artifacts | Out-Null

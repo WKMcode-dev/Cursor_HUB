@@ -1,10 +1,10 @@
-# Cursor Hub 0.3.4
+# Cursor Hub 0.4.0
 
 Windows / C# / .NET 10 / osu!framework.
 
 ## Versao pronta para Windows
 
-Baixe o ZIP win-x64 na [release v0.3.4](https://github.com/WKMcode-dev/Cursor_HUB/releases/tag/v0.3.4), extraia toda a pasta e abra CursorHub.exe. O runtime do .NET esta incluido; Visual Studio e SDK nao sao necessarios. Mantenha DLLs e Assets junto do executavel.
+Baixe o ZIP win-x64 na [release v0.4.0](https://github.com/WKMcode-dev/Cursor_HUB/releases/tag/v0.4.0), extraia toda a pasta e abra CursorHub.exe. O runtime do .NET esta incluido; Visual Studio e SDK nao sao necessarios. Mantenha DLLs e Assets junto do executavel.
 
 ## Executar o codigo-fonte
 
@@ -77,7 +77,7 @@ A troca do cursor do sistema e a apresentacao do rastro foram desacopladas. Falh
 Verificacao desta entrega: compilacao sem erros; capturas internas sem pixels pretos na regiao opaca; 3077 pixels de alfa parcial presentes na borda no tamanho testado; compositor global apresentou 12 quadros e permaneceu ativo ao minimizar mesmo com SetSystemCursor negado. Nao houve teste direto dentro de um jogo. Tela cheia exclusiva, cursores proprios dos jogos e politicas de sobreposicao podem limitar a exibicao; use janela sem bordas para testar.
 
 
-## Correcao 0.3.4: visibilidade acima de outras janelas
+## Correcao 0.4.0: visibilidade acima de outras janelas
 
 A camada global nasce com WS_EX_TOPMOST e recebe ShowWindow(SW_SHOWNOACTIVATE) antes da reafirmacao da ordem de janelas. SetWindowPos agora tem retorno verificado, assim como IsWindowVisible e a flag topmost. Uma falha passa a aparecer como erro em vez de ser confundida com apresentacao bem-sucedida. O worker usa coordenadas fisicas por monitor para evitar deslocamentos em escalas DPI diferentes.
 
@@ -86,3 +86,9 @@ O teste --verify-overlay cria duas janelas proprias independentes e verifica a c
 DIAGNOSTICO.cmd executa esse teste e grava diagnostico-overlay/overlay-results.json. Se ainda houver problema, esse arquivo permite distinguir falha de visibilidade, posicionamento ou apresentacao.
 
 Feche a versao anterior antes de iniciar a nova. A partir desta versao uma segunda instancia exibe um aviso, em vez de encerrar silenciosamente. Jogos em tela cheia exclusiva continuam sem suporte garantido; use janela sem bordas. Nao ha tentativa de contornar restricoes de sobreposicao de jogos.
+
+## Visual Character Chain / 0.4.0
+
+Paleta perolada com texto grafite, ciano, rosa e lavanda. Grade de 24 slots por pagina, miniaturas compartilhadas, indicacao do preset demonstrado e menu lateral de acoes. As posicoes livres nao representam presets salvos. Os arquivos pessoais existentes sao preservados. A previa compacta no topo da colecao responde ao mouse; Cursor, Rastro e Desempenho ampliam a previa.
+
+Os vetores originais em Tools/Art geram PNGs de alta resolucao uma unica vez. O app carrega e compartilha cada textura por nome. Nao ha shaders animados, blur ou geracao de imagens em tempo de execucao. A pre-visualizacao atualiza apenas os pontos ativos, e o rasterizador do desktop calcula raiz quadrada somente na borda suavizada das particulas. A comparacao automatizada verifica os pixels com a formula anterior; isso nao substitui medicoes de CPU/GPU e latencia em hardware real.

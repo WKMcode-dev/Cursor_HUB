@@ -30,11 +30,18 @@ public partial class CursorHubGame
         try
         {
             await Task.Delay(2000);
+            await Capture("00-empty-collection");
+            await OnGameThread(() =>
+            {
+                for (int i = 0; i < 24; i++)
+                    presets.Items.Add(new CursorPreset(Guid.NewGuid(), $"Chain {i + 1:00}", CurrentSettings() with { Colour = i % 4 }));
+                RefreshPresets();
+            });
             await Capture("01-presets");
             await OnGameThread(() =>
             {
                 var sample = new CursorPreset(Guid.NewGuid(), "Neon Pulse", CurrentSettings());
-                presets.Items.Add(sample); RefreshPresets(); OpenPresetMenu(sample, 0);
+                presets.Items.Add(sample); RefreshPresets(); OpenPresetMenu(sample, 23);
             });
             await Capture("02-menu");
             await OnGameThread(() => { presetMenu.Alpha = 0; OpenPresetEditor(null); });

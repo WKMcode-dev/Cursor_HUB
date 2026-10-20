@@ -13,8 +13,8 @@ namespace CursorHub;
 
 public partial class CursorHubGame
 {
-    private static readonly Color4 Orange = new(255, 155, 32, 255);
-    private static readonly Color4 Muted = new(142, 149, 158, 255);
+    private static readonly Color4 Orange = new(40, 125, 145, 255);
+    private static readonly Color4 Muted = new(100, 105, 117, 255);
     private readonly Container[] sections = new Container[4];
     private readonly HubButton[] navigation = new HubButton[4];
     private HubButton playButton = null!, economyButton = null!, rateButton = null!;
@@ -24,10 +24,12 @@ public partial class CursorHubGame
     private readonly BindableInt lifetimeBinding = new(180) { MinValue = 60, MaxValue = 600 };
     private string notice = "Configuracoes locais";
 
+    private readonly Dictionary<string, Texture> skins = new();
     private Texture LoadSkin(string file)
     {
+        if (skins.TryGetValue(file, out var cached)) return cached;
         using var stream = File.OpenRead(Path.Combine(AppContext.BaseDirectory, "Assets", file));
-        return Texture.FromStream(Host.Renderer, stream) ?? throw new InvalidOperationException("Imagem invalida: " + file);
+        return skins[file] = Texture.FromStream(Host.Renderer, stream) ?? throw new InvalidOperationException("Imagem invalida: " + file);
     }
 
     private Container BuildInterface()
@@ -36,29 +38,31 @@ public partial class CursorHubGame
         {
             TargetDrawSize = new Vector2(800, 500), Strategy = DrawSizePreservationStrategy.Separate
         };
-        using var stream = File.OpenRead(Path.Combine(AppContext.BaseDirectory, "Assets", "frame.png"));
-        root.Add(new Sprite { Texture = Texture.FromStream(Host.Renderer, stream), Size = new Vector2(800, 500) });
-        root.Add(new DragStrip { Position = new Vector2(12, 28), Size = new Vector2(548, 70), DragWindow = () => chrome?.Drag() });
-        root.Add(Label("CURSOR", 28, 45, 24, Color4.White));
-        root.Add(Label("HUB", 135, 45, 24, Orange));
-        root.Add(Label("MAKE YOUR MOVE.", 29, 77, 10, Muted));
-        root.Add(Label("PERSONALIZACAO", 198, 91, 10, Orange));
-        root.Add(sectionTitle = Label("Seu cursor, do seu jeito.", 198, 108, 20));
+        root.Add(new Sprite { Texture = LoadSkin("frame.png"), Size = new Vector2(800, 500) });
+        root.Add(new DragStrip { Position = new Vector2(12, 28), Size = new Vector2(228, 60), DragWindow = () => chrome?.Drag() });
+        root.Add(Label("CURSOR / HUB", 26, 43, 23));
+        root.Add(Label("CHARACTER CHAIN   /   01", 27, 73, 9, Muted));
+        root.Add(Label("DEMONSTRACAO", 348, 83, 9, Orange));
+        root.Add(sectionTitle = Label("Sua colecao de presets.", 348, 98, 14));
         root.Add(new TrafficLightButton { Skin = LoadSkin("close.png"), Text = "x", Position = new Vector2(660, 35), Action = () => Exit() });
         root.Add(new TrafficLightButton { Skin = LoadSkin("minimize.png"), Text = "-", Position = new Vector2(704, 35), Action = () => chrome?.Minimize() });
         root.Add(new TrafficLightButton { Skin = LoadSkin("maximize.png"), Text = "+", Position = new Vector2(748, 35), Action = () => chrome?.ToggleMaximize() });
-        root.Add(new Box { Position = new Vector2(174, 138), Size = new Vector2(1, 267), Colour = new Color4(61, 65, 70, 255) });
-
-        string[] names = { "01   Presets", "02   Cursor", "03   Rastro", "04   Desempenho" };
+        root.Add(new Box { Position = new Vector2(240, 36), Size = new Vector2(1, 432), Colour = new Color4(183, 186, 193, 255) });
+        // Static technical markings: no animations or per-frame asset generation.
+        for (int i = 0; i < 9; i++)
+            root.Add(new Box { Position = new Vector2(234, 246 + i * 5), Size = new Vector2(4, 2), Colour = Muted });
+        root.Add(new Sprite { Texture = LoadSkin("chain.png"), Position = new Vector2(26, 323), Size = new Vector2(185, 26) });
+        string[] names = { "01    PRESETS", "02    CURSOR", "03    RASTRO", "04    DESEMPENHO" };
         for (int i = 0; i < 4; i++)
         {
             int index = i;
-            root.Add(navigation[i] = MakeButton(names[i], 20, 140 + i * 46, 140, () => SelectSection(index)));
-            root.Add(sections[i] = new Container { Position = new Vector2(198, 151), Size = new Vector2(235, 240) });
+            root.Add(navigation[i] = MakeButton(names[i], 26, 109 + i * 48, 190, () => SelectSection(index)));
+            navigation[i].Height = 40;
+            root.Add(sections[i] = new Container { Position = new Vector2(264, 145), Size = new Vector2(235, 260) });
         }
-        root.Add(Label("DESKTOP ENGINE", 29, 345, 9, Muted));
-        root.Add(Label("osu!framework", 29, 363, 13));
-        root.Add(Label("v0.3.4 / Windows", 29, 385, 10, Muted));
+        root.Add(Label("DESKTOP PERSONALIZATION", 27, 367, 9, Muted));
+        root.Add(Label("osu!framework / v0.4.0", 27, 384, 11));
+        root.Add(Label("CTRL + SHIFT + X  /  PARAR", 27, 410, 9, Muted));
 
         sections[1].Add(Label("APARENCIA", 0, 0, 11, Muted));
         AddSlider(sections[1], "Tamanho do cursor", 34, size, 8, 48, value => size = value, "px", sizeBinding);
@@ -98,23 +102,23 @@ public partial class CursorHubGame
 
         root.Add(previewCard = new Container
         {
-            Position = new Vector2(454, 145), Size = new Vector2(310, 261),
-            Masking = true, CornerRadius = 8, BorderThickness = 1, BorderColour = new Color4(64, 68, 74, 255),
+            Position = new Vector2(522, 145), Size = new Vector2(242, 261),
+            Masking = true, CornerRadius = 5, BorderThickness = 1, BorderColour = new Color4(190, 194, 203, 255),
             Children = new Drawable[]
             {
-                new Box { RelativeSizeAxes = Axes.Both, Colour = new Color4(25, 27, 30, 255) },
-                Label("PREVIA AO VIVO", 17, 15, 10, Muted),
-                new Box { Position = new Vector2(155, 99), Size = new Vector2(1, 50), Colour = new Color4(45, 48, 52, 255) },
-                new Box { Position = new Vector2(130, 124), Size = new Vector2(50, 1), Colour = new Color4(45, 48, 52, 255) },
-                Label("Mova o mouse nesta area", 64, 228, 12, Muted)
+                new Box { RelativeSizeAxes = Axes.Both, Colour = new Color4(255, 255, 255, 255) },
+                
+                new Box { Position = new Vector2(121, 106), Size = new Vector2(1, 50), Colour = new Color4(209, 214, 223, 255) },
+                new Box { Position = new Vector2(96, 131), Size = new Vector2(50, 1), Colour = new Color4(209, 214, 223, 255) },
+                
             }
         });
-        root.Add(status = Label("", 198, 412, 10, Muted));
-        root.Add(MakeButton("SALVAR AJUSTES", 24, 445, 166, SaveSettings));
+        root.Add(status = Label("", 264, 449, 8, Muted));
+        root.Add(MakeButton("SALVAR AJUSTES", 26, 442, 190, SaveSettings));
         playButton = MakeButton("PLAY", 650, 444, 136, TogglePlay);
         playButton.Height = 42;
         playButton.Skin = LoadSkin("play.png");
-        playButton.TextColour = new Color4(30, 30, 30, 255);
+        playButton.TextColour = new Color4(248, 249, 252, 255);
         root.Add(playButton);
         InitializePresets(root);
         SelectSection(0);
@@ -125,18 +129,22 @@ public partial class CursorHubGame
     {
         string[] titles = { "Sua colecao de presets.", "Seu cursor, do seu jeito.", "Deixe sua marca.", "Leve por escolha." };
         if (presetMenu is not null) presetMenu.Alpha = 0;
+        if (presetEditor is not null) presetEditor.Alpha = 0;
+        previewCard.Position = index == 0 ? new Vector2(264, 40) : new Vector2(522, 145);
+        previewCard.Size = index == 0 ? new Vector2(70, 70) : new Vector2(242, 261);
         sectionTitle.Text = titles[index];
         for (int i = 0; i < sections.Length; i++)
         {
             sections[i].Alpha = i == index ? 1 : 0;
-            navigation[i].BackgroundColour = i == index ? new Color4(79, 59, 33, 255) : new Color4(34, 36, 39, 255);
-            navigation[i].TextColour = i == index ? Orange : Muted;
+            navigation[i].Skin = LoadSkin(i == index ? "nav-selected.png" : "nav.png");
+            navigation[i].BackgroundColour = i == index ? new Color4(30, 34, 43, 255) : new Color4(247, 248, 250, 255);
+            navigation[i].TextColour = i == index ? new Color4(245, 247, 251, 255) : Muted;
         }
     }
 
     private static SpriteText Label(string text, float x, float y, float size = 14, Color4? colour = null) => new()
     {
-        Text = text, Position = new Vector2(x, y), Font = new FontUsage(size: size), Colour = colour ?? new Color4(228, 230, 232, 255)
+        Text = text, Position = new Vector2(x, y), Font = new FontUsage(size: size), Colour = colour ?? new Color4(30, 34, 43, 255)
     };
 
     private static HubButton MakeButton(string text, float x, float y, float width, Action action) => new()
@@ -155,7 +163,7 @@ public partial class CursorHubGame
         parent.Add(new BasicSliderBar<int>
         {
             Position = new Vector2(0, y + 66), Size = new Vector2(222, 8),
-            Current = current, BackgroundColour = new Color4(58, 62, 67, 255), SelectionColour = Orange
+            Current = current, BackgroundColour = new Color4(213, 217, 225, 255), SelectionColour = Orange
         });
     }
 
