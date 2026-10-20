@@ -1,0 +1,16 @@
+Cursor Hub 0.3.4 - Windows x64 portatil
+
+1. Extraia TODA a pasta CursorHub do ZIP para uma pasta sua.
+2. Feche qualquer versao anterior do aplicativo.
+3. Abra CursorHub.exe com dois cliques.
+4. Escolha o preset e pressione Play para ativar o efeito global.
+
+Nao e necessario instalar .NET, Visual Studio ou ferramentas de desenvolvimento.
+Mantenha CursorHub.exe junto das DLLs e da pasta Assets.
+Stop ou Ctrl+Shift+X desliga os efeitos. Fechar o aplicativo restaura o cursor.
+
+Em caso de falha no rastro, execute DIAGNOSTICO.cmd. O resultado fica na
+pasta diagnostico-overlay, no arquivo overlay-results.json.
+
+Esta e uma versao de prototipo. Jogos em tela cheia exclusiva e aplicativos
+com restricoes de sobreposicao podem impedir o rastro. Teste janela sem bordas.

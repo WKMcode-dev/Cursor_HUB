@@ -1,0 +1,61 @@
+name: Windows portable release
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'CursorHub/RELEASE_VERSION'
+      - '.github/workflows/release.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: cursorhub-windows-release
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Validate version
+        run: |
+          $version = (Get-Content CursorHub/RELEASE_VERSION -Raw).Trim()
+          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'Invalid release version' }
+          "RELEASE_VERSION=$version" >> $env:GITHUB_ENV
+      - name: Run core checks
+        run: |
+          dotnet run --project CursorHub/Checks/Checks.csproj -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Core checks failed' }
+      - name: Publish self-contained Windows x64 application
+        run: |
+          dotnet publish CursorHub/CursorHub.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -p:PublishTrimmed=false -p:Version=$env:RELEASE_VERSION -o dist/CursorHub
+          if ($LASTEXITCODE -ne 0) { throw 'Publish failed' }
+          foreach ($file in @('CursorHub.exe','CursorHub.dll','coreclr.dll','hostfxr.dll','Assets/frame.png','Assets/play.png')) {
+            if (!(Test-Path "dist/CursorHub/$file")) { throw "Missing portable dependency: $file" }
+          }
+          Copy-Item CursorHub/Portable/* dist/CursorHub/
+          Copy-Item CursorHub/README.md dist/CursorHub/README-tecnico.md
+      - name: Package and checksum
+        run: |
+          New-Item -ItemType Directory -Force artifacts | Out-Null
+          $name = "CursorHub-$env:RELEASE_VERSION-win-x64.zip"
+          Compress-Archive -Path dist/CursorHub -DestinationPath "artifacts/$name" -CompressionLevel Optimal
+          $hash = (Get-FileHash "artifacts/$name" -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $name" | Set-Content artifacts/SHA256SUMS.txt -Encoding ascii
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CursorHub-windows-x64
+          path: artifacts/*
+          retention-days: 30
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v$env:RELEASE_VERSION" artifacts/* --target "$env:GITHUB_SHA" --title "Cursor Hub $env:RELEASE_VERSION - Windows portatil (x64)" --notes-file CursorHub/RELEASE_NOTES.md --prerelease
+          if ($LASTEXITCODE -ne 0) { throw 'Release publication failed' }
