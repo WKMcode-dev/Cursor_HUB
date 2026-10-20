@@ -62,9 +62,10 @@ public partial class CursorHubGame
                 var name = preset.Name.Length > 9 ? preset.Name[..8] + ".." : preset.Name;
                 card.Add(Label(name, 6, 46, 8));
                 int selectedCell = cell;
-                var menu = MakeButton(":", 55, 34, 16, () => OpenPresetMenu(preset, selectedCell));
+                var menu = MakeButton("", 55, 34, 16, () => OpenPresetMenu(preset, selectedCell));
                 menu.Height = 26;
                 menu.BorderThickness = 0;
+                menu.Skin = LoadSkin("dots.png");
                 card.Add(menu);
                 presetRows.Add(card);
             }
@@ -118,6 +119,7 @@ public partial class CursorHubGame
     private void Demonstrate(CursorPreset preset)
     {
         demonstratedPreset = preset.Id;
+        if (sections[0].Alpha > 0) sectionTitle.Text = preset.Name;
         var s = preset.Settings;
         sizeBinding.Value = Math.Clamp(s.Size, 8, 48);
         lifetimeBinding.Value = Math.Clamp(s.Lifetime, 60, 600);

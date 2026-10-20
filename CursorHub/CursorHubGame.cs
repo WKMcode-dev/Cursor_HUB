@@ -155,6 +155,8 @@ public partial class CursorHubGame : Game
             dot.Alpha = remaining * 0.65f;
         }
         drawnDots = visibleDots;
+        previewPlaceholder.Colour = Accent;
+        previewPlaceholder.Alpha = position.HasValue || trail.Count > 0 ? 0 : 1;
         cursor.Alpha = enabled && position.HasValue ? 1 : 0;
         if (position is { } p)
         {

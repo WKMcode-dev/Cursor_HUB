@@ -20,6 +20,7 @@ public partial class CursorHubGame
     private HubButton playButton = null!, economyButton = null!, rateButton = null!;
     private SpriteText sectionTitle = null!;
     private Container previewCard = null!;
+    private Sprite previewPlaceholder = null!;
     private readonly BindableInt sizeBinding = new(18) { MinValue = 8, MaxValue = 48 };
     private readonly BindableInt lifetimeBinding = new(180) { MinValue = 60, MaxValue = 600 };
     private string notice = "Configuracoes locais";
@@ -52,16 +53,18 @@ public partial class CursorHubGame
         for (int i = 0; i < 9; i++)
             root.Add(new Box { Position = new Vector2(234, 246 + i * 5), Size = new Vector2(4, 2), Colour = Muted });
         root.Add(new Sprite { Texture = LoadSkin("chain.png"), Position = new Vector2(26, 323), Size = new Vector2(185, 26) });
-        string[] names = { "01    PRESETS", "02    CURSOR", "03    RASTRO", "04    DESEMPENHO" };
+        string[] names = { "PRESETS", "CURSOR", "RASTRO", "DESEMPENHO" };
         for (int i = 0; i < 4; i++)
         {
             int index = i;
             root.Add(navigation[i] = MakeButton(names[i], 26, 109 + i * 48, 190, () => SelectSection(index)));
             navigation[i].Height = 40;
+            navigation[i].SetCaptionLayout(56, 13);
+            root.Add(Label($"{i + 1:00}", 41, 122 + i * 48, 12, Muted));
             root.Add(sections[i] = new Container { Position = new Vector2(264, 145), Size = new Vector2(235, 260) });
         }
         root.Add(Label("DESKTOP PERSONALIZATION", 27, 367, 9, Muted));
-        root.Add(Label("osu!framework / v0.4.0", 27, 384, 11));
+        root.Add(Label("osu!framework / v0.4.1", 27, 384, 11));
         root.Add(Label("CTRL + SHIFT + X  /  PARAR", 27, 410, 9, Muted));
 
         sections[1].Add(Label("APARENCIA", 0, 0, 11, Muted));
@@ -113,6 +116,7 @@ public partial class CursorHubGame
                 
             }
         });
+        previewCard.Add(previewPlaceholder = new Sprite { Texture = LoadSkin("cursor.png"), Anchor = Anchor.Centre, Origin = Anchor.Centre, Size = new Vector2(23, 29), Colour = Accent });
         root.Add(status = Label("", 264, 449, 8, Muted));
         root.Add(MakeButton("SALVAR AJUSTES", 26, 442, 190, SaveSettings));
         playButton = MakeButton("PLAY", 650, 444, 136, TogglePlay);
@@ -132,7 +136,7 @@ public partial class CursorHubGame
         if (presetEditor is not null) presetEditor.Alpha = 0;
         previewCard.Position = index == 0 ? new Vector2(264, 40) : new Vector2(522, 145);
         previewCard.Size = index == 0 ? new Vector2(70, 70) : new Vector2(242, 261);
-        sectionTitle.Text = titles[index];
+        sectionTitle.Text = index == 0 && presets.Items.FirstOrDefault(p => p.Id == demonstratedPreset) is { } selected ? selected.Name : titles[index];
         for (int i = 0; i < sections.Length; i++)
         {
             sections[i].Alpha = i == index ? 1 : 0;

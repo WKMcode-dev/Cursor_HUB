@@ -20,6 +20,13 @@ public partial class HubButton : BasicButton
         HoverColour = new Color4(92, 214, 227, 65);
         FlashColour = new Color4(221, 195, 230, 255);
     }
+    public void SetCaptionLayout(float left, float size)
+    {
+        SpriteText.Anchor = Anchor.CentreLeft;
+        SpriteText.Origin = Anchor.CentreLeft;
+        SpriteText.X = left;
+        SpriteText.Font = new FontUsage(size: size);
+    }
     public Color4 TextColour { set => SpriteText.Colour = value; }
     public Texture Skin
     {
