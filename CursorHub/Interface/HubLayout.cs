@@ -15,7 +15,7 @@ namespace CursorHub;
 public partial class CursorHubGame
 {
     private static readonly Color4 Orange = new(40, 125, 145, 255);
-    private static readonly Color4 Muted = new(100, 105, 117, 255);
+    private static Color4 Muted => darkTheme ? new Color4(162, 177, 198, 255) : new Color4(100, 105, 117, 255);
     private readonly Container[] sections = new Container[5];
     private readonly HubButton[] navigation = new HubButton[5];
     private HubButton playButton = null!, economyButton = null!;
@@ -63,7 +63,7 @@ public partial class CursorHubGame
             root.Add(sections[i] = new Container { Position = new Vector2(264, 100), Size = new Vector2(235, 345) });
         }
         root.Add(Label("DESKTOP PERSONALIZATION", 27, 367, 9, Muted));
-        root.Add(Label("osu!framework / v0.7.0", 27, 384, 11));
+        root.Add(Label("osu!framework / v0.7.1", 27, 384, 11));
         root.Add(Label("CTRL + SHIFT + X  /  PARAR", 27, 410, 9, Muted));
 
         sections[1].Add(Label("APARENCIA", 0, 0, 11, Muted));

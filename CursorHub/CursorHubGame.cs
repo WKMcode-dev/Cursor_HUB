@@ -185,7 +185,7 @@ public partial class CursorHubGame : Game
         if (position is { } p)
         {
             float d=size*(input?.PixelScale??1);
-            cursor.Position = new Vector2(p.X+(cursorImage is null?0:(.5f-hotX)*d), p.Y+(cursorImage is null?0:(.5f-hotY)*d));
+            cursor.Position = new Vector2(p.X+(cursorImage is null?0:(size/2f-MathF.Round(hotX*(size-1)))*(input?.PixelScale??1)), p.Y+(cursorImage is null?0:(size/2f-MathF.Round(hotY*(size-1)))*(input?.PixelScale??1)));
             cursor.Texture=LoadSkin(cursorImage ?? "particle.png");
             cursor.Size = new Vector2(size * (input?.PixelScale ?? 1));
             cursor.Colour = cursorImage is null?Accent:Color4.White;
