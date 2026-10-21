@@ -16,8 +16,8 @@ public partial class CursorHubGame
 {
     private static readonly Color4 Orange = new(40, 125, 145, 255);
     private static readonly Color4 Muted = new(100, 105, 117, 255);
-    private readonly Container[] sections = new Container[4];
-    private readonly HubButton[] navigation = new HubButton[4];
+    private readonly Container[] sections = new Container[5];
+    private readonly HubButton[] navigation = new HubButton[5];
     private HubButton playButton = null!, economyButton = null!;
     private readonly BindableInt rateBinding = new(60) { MinValue = 30, MaxValue = 360 };
     private Container previewCard = null!;
@@ -29,6 +29,7 @@ public partial class CursorHubGame
     private readonly Dictionary<string, Texture> skins = new();
     private Texture LoadSkin(string file)
     {
+        if (darkTheme && file is "frame.png" or "nav.png" or "nav-selected.png" or "preset-card.png" or "preset-toolbar.png") file = "dark-" + file;
         if (skins.TryGetValue(file, out var cached)) return cached;
         using var stream = File.OpenRead(Path.Combine(AppContext.BaseDirectory, "Assets", file));
         return skins[file] = Texture.FromStream(Host.Renderer, stream) ?? throw new InvalidOperationException("Imagem invalida: " + file);
@@ -51,18 +52,18 @@ public partial class CursorHubGame
         for (int i = 0; i < 9; i++)
             root.Add(new Box { Position = new Vector2(234, 246 + i * 5), Size = new Vector2(4, 2), Colour = Muted });
         root.Add(new Sprite { Texture = LoadSkin("chain.png"), Position = new Vector2(26, 323), Size = new Vector2(185, 26) });
-        string[] names = { "PRESETS", "CURSOR", "RASTRO", "DESEMPENHO" };
-        for (int i = 0; i < 4; i++)
+        string[] names = { "PRESETS", "CURSOR", "RASTRO", "DESEMPENHO", "CONFIGURACOES" };
+        for (int i = 0; i < 5; i++)
         {
             int index = i;
-            root.Add(navigation[i] = MakeButton(names[i], 26, 109 + i * 48, 190, () => SelectSection(index)));
+            root.Add(navigation[i] = MakeButton(names[i], 26, 109 + i * 42, 190, () => SelectSection(index)));
             navigation[i].Height = 40;
             navigation[i].SetCaptionLayout(56, 13);
-            root.Add(Label($"{i + 1:00}", 41, 122 + i * 48, 12, Muted));
-            root.Add(sections[i] = new Container { Position = new Vector2(264, 145), Size = new Vector2(235, 260) });
+            root.Add(Label($"{i + 1:00}", 41, 122 + i * 42, 12, Muted));
+            root.Add(sections[i] = new Container { Position = new Vector2(264, 100), Size = new Vector2(235, 345) });
         }
         root.Add(Label("DESKTOP PERSONALIZATION", 27, 367, 9, Muted));
-        root.Add(Label("osu!framework / v0.6.0", 27, 384, 11));
+        root.Add(Label("osu!framework / v0.7.0", 27, 384, 11));
         root.Add(Label("CTRL + SHIFT + X  /  PARAR", 27, 410, 9, Muted));
 
         sections[1].Add(Label("APARENCIA", 0, 0, 11, Muted));
@@ -111,7 +112,7 @@ public partial class CursorHubGame
             Masking = true, CornerRadius = 5, BorderThickness = 0, BorderColour = new Color4(190, 194, 203, 255),
             Children = new Drawable[]
             {
-                new Box { RelativeSizeAxes = Axes.Both, Colour = new Color4(255, 255, 255, 255) },
+                new Box { RelativeSizeAxes = Axes.Both, Colour = darkTheme ? new Color4(26, 31, 41, 255) : Color4.White },
                 
                 new Sprite { Texture = LoadSkin("demonstration.png"), RelativeSizeAxes = Axes.Both, Size = Vector2.One },
                 
@@ -129,6 +130,7 @@ public partial class CursorHubGame
         playButton.TextColour = new Color4(248, 249, 252, 255);
         root.Add(playButton);
         InitializePresets(root);
+        BuildCustomization(root);
         SelectSection(0);
         return root;
     }
@@ -136,6 +138,7 @@ public partial class CursorHubGame
     private void SelectSection(int index)
     {
 
+        if (hotspotDialog is not null) hotspotDialog.Alpha = 0;
         if (presetMenu is not null) presetMenu.Alpha = 0;
         if (presetEditor is not null) presetEditor.Alpha = 0;
         trail.Clear();
@@ -150,7 +153,7 @@ public partial class CursorHubGame
 
     private static SpriteText Label(string text, float x, float y, float size = 14, Color4? colour = null) => new()
     {
-        Text = text, Position = new Vector2(x, y), Font = new FontUsage(size: size), Colour = colour ?? new Color4(30, 34, 43, 255)
+        Text = text, Position = new Vector2(x, y), Font = new FontUsage(size: size), Colour = colour ?? (darkTheme ? new Color4(232, 238, 248, 255) : new Color4(30, 34, 43, 255))
     };
 
     private static HubButton MakeButton(string text, float x, float y, float width, Action action) => new()
@@ -176,7 +179,7 @@ public partial class CursorHubGame
     private void UpdateEconomyLabel() => economyButton.Text = $"Economia: {(economy ? "ligada" : "desligada")}";
     private void SaveSettings()
     {
-        try { new HubSettings(size, lifetime, selectedRate, colourIndex, economy).Save(); notice = "Configuracoes salvas"; }
+        try { CurrentSettings().Save(); notice = "Configuracoes salvas"; }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { notice = "Nao foi possivel salvar"; }
         nextStatus = 0;
     }

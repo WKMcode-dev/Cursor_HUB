@@ -20,11 +20,11 @@ public partial class CursorHubGame : Game
     private readonly TrailBuffer trail = new(512);
     private readonly MotionPoint[] previewMoves = new MotionPoint[64];
     private readonly Stopwatch clock = Stopwatch.StartNew();
-    private readonly Circle[] dots = new Circle[512];
+    private readonly Sprite[] dots = new Sprite[1024];
     private readonly string windowTitle = "Cursor Hub | " + Guid.NewGuid().ToString("N")[..8];
     private Container panel = null!;
     private Box background = null!;
-    private Circle cursor = null!;
+    private Sprite cursor = null!;
     private SpriteText status = null!;
     private CursorInput? input;
     private DesktopEffects? desktop;
@@ -54,13 +54,16 @@ public partial class CursorHubGame : Game
         config.SetValue(FrameworkSetting.WindowMode, WindowMode.Windowed);
         config.SetValue(FrameworkSetting.WindowedSize, new System.Drawing.Size(1320, 600));
         var saved = HubSettings.Load();
+        darkTheme=ForceDarkVerification || preferences.DarkTheme;HubButton.DarkTheme=darkTheme;HubButton.Animations=preferences.Animations;
+        cursorImage=saved.CursorImage;trailImage=saved.TrailImage;hotX=Math.Clamp(saved.HotX,0,1);hotY=Math.Clamp(saved.HotY,0,1);
+        try{cursorArt=cursorImage is null?null:RasterAsset.Load(cursorImage);trailArt=trailImage is null?null:RasterAsset.Load(trailImage);}catch{cursorImage=trailImage=null;cursorArt=trailArt=null;}
         size = saved.Size; lifetime = saved.Lifetime; selectedRate = saved.Rate;
         colourIndex = saved.Colour; economy = saved.Economy;
         Add(background = new Box { RelativeSizeAxes = Axes.Both, Colour = Color4.Black });
         Add(panel = BuildInterface());
         for (int i = 0; i < dots.Length; i++)
-            Add(dots[i] = new Circle { Origin = Anchor.Centre, Alpha = 0, Depth = -10 });
-        Add(cursor = new Circle { Origin = Anchor.Centre, Alpha = 0, Depth = -11 });
+            Add(dots[i] = new Sprite { Texture=LoadSkin("particle.png"), Origin = Anchor.Centre, Alpha = 0, Depth = -10 });
+        Add(cursor = new Sprite { Texture=LoadSkin("particle.png"), Origin = Anchor.Centre, Alpha = 0, Depth = -11 });
     }
 
     protected override void LoadComplete()
@@ -70,7 +73,7 @@ public partial class CursorHubGame : Game
         desktop = new DesktopEffects();
         try
         {
-            chrome = new WindowChrome(CursorInput.FindWindow(null, windowTitle));
+            chrome = new WindowChrome(CursorInput.FindWindow(null, windowTitle), darkTheme);
             chrome.Sync(Host.Window.ClientSize.Width, Host.Window.ClientSize.Height);
         }
         catch (Exception error) { notice = "Falha no recorte: " + error.Message; }
@@ -98,7 +101,7 @@ public partial class CursorHubGame : Game
         {
             reportedDesktopError = null; reportedDesktopWarning = null;
             var c = Accent;
-            desktop?.Play(new EffectOptions(size, lifetime, selectedRate, (byte)(c.R * 255), (byte)(c.G * 255), (byte)(c.B * 255)));
+            desktop?.Play(new EffectOptions(size, lifetime, selectedRate, (byte)(c.R * 255), (byte)(c.G * 255), (byte)(c.B * 255), true, cursorArt, trailArt, hotX, hotY, preferences.History, preferences.Particles));
             playing = true;
             playButton.Text = "STOP"; notice = "Cursor global ativando / Ctrl+Shift+X para parar";
         }
@@ -139,7 +142,7 @@ public partial class CursorHubGame : Game
             float x = viewport.X(previewPoint.X), y = viewport.Y(previewPoint.Y);
             float margin = size * (input?.PixelScale ?? 1) / (2 * viewport.Scale) + 2;
             var bounds = previewCard;
-            if (x < bounds.X + margin || x > bounds.X + bounds.Width - margin || y < bounds.Y + margin || y > bounds.Y + bounds.Height - margin || presetEditor.Alpha > 0 || presetMenu.Alpha > 0) position = null;
+            if (x < bounds.X + margin || x > bounds.X + bounds.Width - margin || y < bounds.Y + margin || y > bounds.Y + bounds.Height - margin || presetEditor.Alpha > 0 || presetMenu.Alpha > 0 || hotspotDialog.Alpha > 0) position = null;
         }
         bool moved = position != lastPosition;
         if (moved) lastMovement = now;
@@ -148,7 +151,7 @@ public partial class CursorHubGame : Game
         if (idle != shouldIdle) { idle = shouldIdle; ApplyRate(); }
 
         float spacing = Math.Max(1, size * (input?.PixelScale ?? 1) / 8f);
-        if (enabled && position.HasValue && !verifyPreviewPointer && input is not null)
+        if (enabled && position.HasValue && !verifyPreviewPointer && input is not null && preferences.History)
         {
             int recovered = input.ReadHistory(now, previewMoves);
             float margin = size * input.PixelScale / (2 * viewport.Scale) + 2;
@@ -162,16 +165,17 @@ public partial class CursorHubGame : Game
         }
         else input?.ResetHistory();
         trail.Advance(enabled ? position : null, now, lifetime, spacing);
-        int visibleDots = enabled ? trail.Count : 0;
+        int visibleDots = enabled ? Math.Min(trail.Count,preferences.Particles) : 0;
         for (int i = 0; i < Math.Max(visibleDots, drawnDots); i++)
         {
             var dot = dots[i];
-            if (!enabled || i >= trail.Count) { if (dot.Alpha != 0) dot.Alpha = 0; continue; }
-            var sample = trail[i];
+            if (!enabled || i >= visibleDots) { if (dot.Alpha != 0) dot.Alpha = 0; continue; }
+            var sample = trail[i + Math.Max(0,trail.Count-visibleDots)];
             float remaining = Math.Clamp(1 - (float)((now - sample.Born) / lifetime), 0, 1);
             dot.Position = new Vector2(sample.Position.X, sample.Position.Y);
             dot.Size = new Vector2(size * (input?.PixelScale ?? 1) * (0.25f + remaining * 0.65f));
-            dot.Colour = Accent;
+            dot.Texture=LoadSkin(trailImage ?? "particle.png");
+            dot.Colour = trailImage is null?Accent:Color4.White;
             dot.Alpha = remaining * 0.65f;
         }
         drawnDots = visibleDots;
@@ -180,9 +184,11 @@ public partial class CursorHubGame : Game
         cursor.Alpha = enabled && position.HasValue ? 1 : 0;
         if (position is { } p)
         {
-            cursor.Position = new Vector2(p.X, p.Y);
+            float d=size*(input?.PixelScale??1);
+            cursor.Position = new Vector2(p.X+(cursorImage is null?0:(.5f-hotX)*d), p.Y+(cursorImage is null?0:(.5f-hotY)*d));
+            cursor.Texture=LoadSkin(cursorImage ?? "particle.png");
             cursor.Size = new Vector2(size * (input?.PixelScale ?? 1));
-            cursor.Colour = Accent;
+            cursor.Colour = cursorImage is null?Accent:Color4.White;
         }
         if (now >= nextStatus)
         {

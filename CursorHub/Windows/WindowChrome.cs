@@ -56,11 +56,11 @@ internal sealed class WindowChrome : IDisposable
     private int disposed;
     internal int SoftEdgePixels { get; private set; }
 
-    public WindowChrome(nint handle)
+    public WindowChrome(nint handle, bool dark = false)
     {
         if (handle == 0) throw new InvalidOperationException("Janela nativa ainda indisponivel.");
         this.handle = handle;
-        mask = new ChromeMask(Path.Combine(AppContext.BaseDirectory, "Assets"));
+        mask = new ChromeMask(Path.Combine(AppContext.BaseDirectory, "Assets"), dark);
         SetWindowLong(handle, -16, GetWindowLong(handle, -16) & ~0x00CF0000);
         RemoveSystemBorder();
         SetWindowPos(handle, 0, 0, 0, 0, 0, 0x0037); // FRAMECHANGED, no move/size/activate/z-order

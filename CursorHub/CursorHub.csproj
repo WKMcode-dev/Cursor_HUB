@@ -5,9 +5,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Version>0.6.0</Version>
+    <Version>0.7.0</Version>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Svg.Skia" Version="3.2.1" />
     <PackageReference Include="ppy.osu.Framework" Version="2026.1008.0" />
     <Compile Remove="Checks/**/*.cs" />
     <Content Include="Assets/**/*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />

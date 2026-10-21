@@ -10,10 +10,11 @@ internal sealed class ChromeMask
 {
     private sealed record Layer(int X, int Y, int Width, int Height, int PixelWidth, int PixelHeight, uint[] Pixels);
     private readonly Layer[] layers;
-    public ChromeMask(string directory)
+    public ChromeMask(string directory, bool dark = false)
     {
         Layer Load(string file, int x, int y, int width, int height)
         {
+            if(dark && file=="frame.png") file="dark-frame.png";
             using var image = Image.Load<Rgba32>(Path.Combine(directory, file));
             var pixels = new uint[image.Width * image.Height];
             image.ProcessPixelRows(rows =>

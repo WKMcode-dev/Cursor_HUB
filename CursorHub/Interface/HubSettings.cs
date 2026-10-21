@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace CursorHub.Interface;
 
-internal sealed record HubSettings(int Size = 18, int Lifetime = 180, int Rate = 60, int Colour = 0, bool Economy = true)
+internal sealed record HubSettings(int Size = 18, int Lifetime = 180, int Rate = 60, int Colour = 0, bool Economy = true, string? CursorImage = null, string? TrailImage = null, float HotX = .5f, float HotY = .5f)
 {
     private static string FilePath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CursorHub", "settings.json");
     public static HubSettings Load()

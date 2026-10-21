@@ -56,9 +56,19 @@ internal sealed unsafe class CursorController : IDisposable
         {
             if (bitmap == 0 || mask == 0 || bits == 0) throw new Win32Exception();
             var pixels = new Span<uint>((void*)bits, extent * extent); pixels.Clear();
-            LayeredSurface.Circle(pixels, extent, extent, extent, 32, 32, options.Size / 2f + 1, 255, 255, 255, 1);
-            LayeredSurface.Circle(pixels, extent, extent, extent, 32, 32, options.Size / 2f, options.R, options.G, options.B, 1);
-            var icon = new IconInfo { HotX = 32, HotY = 32, Colour = bitmap, Mask = mask };
+            uint hx=32,hy=32;
+            if(options.CursorArt is {} art)
+            {
+                LayeredSurface.Stamp(pixels,extent,extent,extent,options.Size/2f,options.Size/2f,options.Size,art,1);
+                hx=(uint)Math.Clamp((int)Math.Round(options.HotX*(options.Size-1)),0,options.Size-1);
+                hy=(uint)Math.Clamp((int)Math.Round(options.HotY*(options.Size-1)),0,options.Size-1);
+            }
+            else
+            {
+                LayeredSurface.Circle(pixels,extent,extent,extent,32,32,options.Size/2f,255,255,255,1);
+                LayeredSurface.Circle(pixels,extent,extent,extent,32,32,Math.Max(1,options.Size/2f-1),options.R,options.G,options.B,1);
+            }
+            var icon = new IconInfo { HotX = hx, HotY = hy, Colour = bitmap, Mask = mask };
             cursor = CreateIconIndirect(ref icon);
             if (cursor == 0) throw new Win32Exception();
             foreach (uint role in Roles)

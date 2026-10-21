@@ -1,13 +1,14 @@
-## Cursor Hub 0.6.0
+## Cursor Hub 0.7.0
 
-- Remove o fundo retangular de hover dos botoes com SVG.
-- Icones: lixeira em vermelho, editar em dourado e usar em verde.
-- Nova Demonstration_Area.svg em ciano/grafite, sem a moldura alta do conceito anterior.
-- Titulos decorativos removidos.
-- Limite ajustavel entre 30 e 360Hz, com atalhos 60/75/144/165Hz e persistencia. O valor e um teto, nao uma garantia de FPS.
-- Recupera ate 64 posicoes reais do historico do Windows entre quadros, na previa e no desktop, com fallback para a posicao atual. Evita reconstruir um arco inteiro apenas pela reta entre as pontas. Buffer fixo de 512 particulas e espacamento mais fino.
-- Espera de alta resolucao quando disponivel, sem busy-wait nem mudanca global da resolucao de temporizadores.
+- Botoes de imagem agora usam ClickableContainer proprio, sem camadas de hover/flash do BasicButton.
+- Nova pagina Configuracoes: tema claro/escuro (proxima abertura), animacoes, captura detalhada, limite de particulas e acesso ao ajuste de Hz.
+- Importacao PNG/SVG para cursor e rastro. Imagens normalizadas, copiadas para os dados locais e reutilizadas durante o movimento.
+- Editor de hotspot com transparencia em xadrez, mira arrastavel, centralizar, aplicar e cancelar. O hotspot e utilizado pelo cursor nativo do Windows.
+- Presets e ajustes guardam imagens e hotspot.
+- Captura do rastro preserva posicoes diferentes com o mesmo timestamp, antes descartadas pelo filtro temporal.
 
-Baixe **CursorHub-0.6.0-win-x64.zip**, extraia toda a pasta e abra **CursorHub.exe**. Runtime .NET incluido, sem SDK ou Visual Studio. Feche a versao anterior antes de iniciar.
+Baixe **CursorHub-0.7.0-win-x64.zip**, extraia toda a pasta e abra **CursorHub.exe**. Inclui runtime .NET. Feche a versao anterior primeiro.
 
-A captura depende do historico disponivel no Windows e do mouse; movimentos nao registrados nao podem ser recuperados. Testes sinteticos verificam arco, limites, alfa e persistencia; o pipeline tambem abre a UI e verifica recorte, 8px ao maximizar/restaurar e composicao global. Desempenho e fidelidade em movimentos humanos e jogos ainda precisam de medicao em hardware real. Tela cheia exclusiva pode impedir o rastro. Avisos transitivos de ImageSharp permanecem pendentes.
+Para usar imagens: Cursor > Importar cursor > posicionar hotspot; Rastro > Importar rastro. Salvar ajustes preserva as escolhas; Play aplica o cursor no desktop. Depois de editar um cursor ativo, pare e reative Play.
+
+SVGs devem ser estaticos e autocontidos. A importacao prepara um bitmap com alfa; nao interpreta o SVG a cada quadro. Arquivos do tema do Windows nao sao modificados. Continua sendo pre-release; jogos em tela cheia exclusiva podem impedir sobreposicoes. Impacto e fidelidade em movimentos rapidos ainda precisam de medicao em hardware real. Avisos transitivos conhecidos de ImageSharp permanecem pendentes.

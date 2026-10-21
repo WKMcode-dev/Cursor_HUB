@@ -117,6 +117,22 @@ internal sealed unsafe class LayeredSurface : IDisposable
         }
     }
 
+    internal static void Stamp(Span<uint> pixels, int stride, int width, int height, float x, float y, float diameter, RasterAsset art, float opacity)
+    {
+        int side=Math.Max(1,(int)MathF.Ceiling(diameter));
+        int left=(int)MathF.Floor(x-side/2f),top=(int)MathF.Floor(y-side/2f);
+        int factor=(int)(Math.Clamp(opacity,0,1)*255);
+        for(int yy=Math.Max(0,top);yy<Math.Min(height,top+side);yy++)
+        for(int xx=Math.Max(0,left);xx<Math.Min(width,left+side);xx++)
+        {
+            uint src=art.Pixels[Math.Min(art.Height-1,(yy-top)*art.Height/side)*art.Width+Math.Min(art.Width-1,(xx-left)*art.Width/side)];
+            int a=(int)(src>>24)*factor/255;if(a==0)continue;
+            int inv=255-a,index=yy*stride+xx;uint dst=pixels[index];uint result=(uint)(a+((dst>>24)*inv)/255)<<24;
+            for(int shift=0;shift<24;shift+=8) result|=(uint)((((src>>shift)&255)*factor+((dst>>shift)&255)*inv)/255)<<shift;
+            pixels[index]=result;
+        }
+    }
+
     public void Dispose()
     {
         if (dc != 0 && oldBitmap != 0) SelectObject(dc, oldBitmap);

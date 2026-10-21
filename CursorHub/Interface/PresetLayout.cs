@@ -5,6 +5,7 @@ using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.UserInterface;
 using osuTK;
+using CursorHub.Windows;
 using osuTK.Graphics;
 
 namespace CursorHub;
@@ -116,12 +117,14 @@ public partial class CursorHubGame
         presetMenu.Alpha = 1;
     }
 
-    private HubSettings CurrentSettings() => new(size, lifetime, selectedRate, colourIndex, economy);
+    private HubSettings CurrentSettings() => new(size, lifetime, selectedRate, colourIndex, economy, cursorImage, trailImage, hotX, hotY);
 
     private void Demonstrate(CursorPreset preset)
     {
         demonstratedPreset = preset.Id;
         var s = preset.Settings;
+        cursorImage=s.CursorImage;trailImage=s.TrailImage;hotX=Math.Clamp(s.HotX,0,1);hotY=Math.Clamp(s.HotY,0,1);
+        try{cursorArt=cursorImage is null?null:RasterAsset.Load(cursorImage);trailArt=trailImage is null?null:RasterAsset.Load(trailImage);}catch{cursorImage=trailImage=null;cursorArt=trailArt=null;}
         sizeBinding.Value = Math.Clamp(s.Size, 8, 48);
         lifetimeBinding.Value = Math.Clamp(s.Lifetime, 60, 600);
         colourIndex = Math.Clamp(s.Colour, 0, palette.Length - 1);
@@ -140,7 +143,7 @@ public partial class CursorHubGame
         presetEditor.Clear();
         var s = existing?.Settings ?? CurrentSettings();
         int editSize = s.Size, editLifetime = s.Lifetime, editColour = Math.Clamp(s.Colour, 0, palette.Length - 1);
-        presetEditor.Add(new Box { RelativeSizeAxes = Axes.Both, Colour = new Color4(238, 241, 246, 255) });
+        presetEditor.Add(new Box { RelativeSizeAxes = Axes.Both, Colour = darkTheme?new Color4(36,42,54,255):new Color4(238, 241, 246, 255) });
         presetEditor.Add(Label(existing is null ? "NOVO PRESET" : "EDITAR PRESET", 16, 14, 14, Orange));
         var name = new BasicTextBox { Position = new Vector2(16, 42), Size = new Vector2(302, 32), Text = existing?.Name ?? $"Preset {presets.Items.Count + 1}", PlaceholderText = "Nome do preset" };
         presetEditor.Add(name);

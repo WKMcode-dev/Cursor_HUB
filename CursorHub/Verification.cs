@@ -9,6 +9,7 @@ namespace CursorHub;
 public partial class CursorHubGame
 {
     public string? VerificationDirectory { get; set; }
+    public bool ForceDarkVerification {get;set;}
     public bool VerifyUiOnly { get; set; }
     private bool verifyPreviewPointer;
     private Task OnGameThread(Action action)
@@ -40,6 +41,17 @@ public partial class CursorHubGame
                 RefreshPresets();
             });
             await Capture("01-presets");
+            await OnGameThread(()=>SelectSection(4));
+            await Capture("01c-settings");
+            await OnGameThread(()=>
+            {
+                _ = RasterAsset.Import(Path.Combine(AppContext.BaseDirectory,"Assets","import-test.svg"));
+                cursorImage=RasterAsset.Import(Path.Combine(AppContext.BaseDirectory,"Assets","cursor.png"));
+                cursorArt=RasterAsset.Load(cursorImage);hotX=.15f;hotY=.2f;SelectSection(1);OpenHotspot();
+            });
+            await Capture("01d-hotspot");
+            await OnGameThread(()=> {hotspotDialog.Hide();cursorImage=null;cursorArt=null;hotX=hotY=.5f;});
+            results.Add("Importacao SVG/PNG e editor de hotspot executados");
             await OnGameThread(() => SelectSection(3));
             await Capture("01b-performance");
             await OnGameThread(() => { rateBinding.Value = 165; if (selectedRate != 165) throw new Exception("165Hz nao aplicado"); SelectSection(0); });

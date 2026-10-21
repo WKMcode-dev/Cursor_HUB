@@ -109,3 +109,12 @@ for (int i = 0; i < curved.Count; i++) maxDeviation = Math.Max(maxDeviation, Mat
 Check(curved.Count > 100 && maxDeviation < .05f, "pontos intermediarios preservam o arco em vez de uma corda reta");
 curved.Advance(null, 65, 600, 1); curved.Advance(new Vector2(-100, -100), 66, 600, 1);
 Check(curved[curved.Count - 1].Position == new Vector2(-100, -100), "reentrada do historico nao inventa curva");
+
+var stampBuffer=new uint[16*16];
+var stampArt=new CursorHub.Windows.RasterAsset(2,2,new uint[]{0x80800000,0,0,0x80008000});
+CursorHub.Windows.LayeredSurface.Stamp(stampBuffer,16,16,16,8,8,4,stampArt,.5f);
+Check(stampBuffer[0]==0 && stampBuffer.Any(p=>(p>>24)>0),"imagem customizada preserva transparencia");
+Check(stampBuffer.All(p=>((p>>16)&255)<=(p>>24) && ((p>>8)&255)<=(p>>24) && (p&255)<=(p>>24)),"imagem customizada mantem alfa premultiplicado");
+var imagePreset=new CursorHub.Interface.HubSettings(CursorImage:"cursor.png",TrailImage:"trail.png",HotX:.1f,HotY:.8f,Rate:165);
+var roundtrip=System.Text.Json.JsonSerializer.Deserialize<CursorHub.Interface.HubSettings>(System.Text.Json.JsonSerializer.Serialize(imagePreset));
+Check(roundtrip==imagePreset,"preset preserva imagens e hotspot");

@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 
 namespace CursorHub.Windows;
 
-internal sealed record EffectOptions(int Size, int Lifetime, int Rate, byte R, byte G, byte B, bool CustomizeCursor = true);
+internal sealed record EffectOptions(int Size, int Lifetime, int Rate, byte R, byte G, byte B, bool CustomizeCursor = true, RasterAsset? CursorArt = null, RasterAsset? TrailArt = null, float HotX = .5f, float HotY = .5f, bool History = true, int Particles = 512);
 
 internal sealed class DesktopEffects : IDisposable
 {
@@ -77,7 +77,8 @@ internal sealed class DesktopEffects : IDisposable
                 {
                     if (applied != settings)
                     {
-                        bool changedCursor = applied is null || applied.Size != settings.Size || applied.R != settings.R || applied.G != settings.G || applied.B != settings.B || applied.CustomizeCursor != settings.CustomizeCursor;
+                        if(trail.Capacity!=settings.Particles) { trail=new TrailBuffer(Math.Clamp(settings.Particles,256,1024)); history.Reset(); }
+                        bool changedCursor = applied is null || applied.Size != settings.Size || applied.R != settings.R || applied.G != settings.G || applied.B != settings.B || applied.CustomizeCursor != settings.CustomizeCursor || applied.CursorArt != settings.CursorArt || applied.HotX != settings.HotX || applied.HotY != settings.HotY;
                         if (changedCursor && settings.CustomizeCursor)
                         {
                             try { cursors.Apply(settings); }
@@ -99,7 +100,7 @@ internal sealed class DesktopEffects : IDisposable
                     bool moved = last is null || point.X != last.Value.X || point.Y != last.Value.Y;
                     last = point;
                     float spacing = Math.Max(1, settings.Size / 8f);
-                    if (probePosition is null)
+                    if (probePosition is null && settings.History)
                     {
                         int count = history.Read(point.X, point.Y, frameStart, moves);
                         for (int i = 0; i < count; i++) trail.Advance(moves[i].Position, moves[i].Time, settings.Lifetime, spacing);
@@ -124,7 +125,8 @@ internal sealed class DesktopEffects : IDisposable
                         {
                             var sample = trail[i];
                             float remaining = Math.Clamp(1 - (float)((frameStart - sample.Born) / settings.Lifetime), 0, 1);
-                            LayeredSurface.Circle(pixels, LayeredSurface.Extent, width, height,
+                            if(settings.TrailArt is {} art) LayeredSurface.Stamp(pixels, LayeredSurface.Extent,width,height,sample.Position.X-left,sample.Position.Y-top,settings.Size*(.25f+remaining*.65f),art,remaining*.65f);
+                            else LayeredSurface.Circle(pixels, LayeredSurface.Extent, width, height,
                                 sample.Position.X - left, sample.Position.Y - top, settings.Size * (.125f + remaining * .325f), settings.R, settings.G, settings.B, remaining * .65f);
                         }
                         surface.Present(left, top, width, height); visible = true;
