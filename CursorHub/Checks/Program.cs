@@ -96,3 +96,16 @@ foreach (var dimensions in new[] { (1320f, 600f), (1920f, 1080f), (1024f, 768f),
     Check(Math.Abs(renderedWidth / renderedHeight - 2.2f) < .0001, "proporcao da interface preservada");
     Check(Math.Abs(fit.X(fit.Left + 933 * fit.Scale) - 933) < .001f && Math.Abs(fit.Y(fit.Top + 254 * fit.Scale) - 254) < .001f, "hit test e renderizacao usam a mesma escala");
 }
+
+Check(CursorHub.Windows.MouseHistory.Decode(65535) == -1 && CursorHub.Windows.MouseHistory.Decode(1200) == 1200, "coordenadas de historico em monitores negativos");
+var curved = new TrailBuffer(512);
+for (int i = 0; i <= 64; i++)
+{
+    float angle = i * MathF.PI / 128;
+    curved.Advance(new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * 100, i, 600, 1);
+}
+float maxDeviation = 0;
+for (int i = 0; i < curved.Count; i++) maxDeviation = Math.Max(maxDeviation, Math.Abs(curved[i].Position.Length() - 100));
+Check(curved.Count > 100 && maxDeviation < .05f, "pontos intermediarios preservam o arco em vez de uma corda reta");
+curved.Advance(null, 65, 600, 1); curved.Advance(new Vector2(-100, -100), 66, 600, 1);
+Check(curved[curved.Count - 1].Position == new Vector2(-100, -100), "reentrada do historico nao inventa curva");

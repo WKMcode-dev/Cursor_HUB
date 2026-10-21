@@ -18,8 +18,8 @@ public partial class CursorHubGame
     private static readonly Color4 Muted = new(100, 105, 117, 255);
     private readonly Container[] sections = new Container[4];
     private readonly HubButton[] navigation = new HubButton[4];
-    private HubButton playButton = null!, economyButton = null!, rateButton = null!;
-    private SpriteText sectionTitle = null!;
+    private HubButton playButton = null!, economyButton = null!;
+    private readonly BindableInt rateBinding = new(60) { MinValue = 30, MaxValue = 360 };
     private Container previewCard = null!;
     private Sprite previewPlaceholder = null!;
     private readonly BindableInt sizeBinding = new(18) { MinValue = 8, MaxValue = 48 };
@@ -42,7 +42,7 @@ public partial class CursorHubGame
         root.Add(Label("CURSOR / HUB", 26, 43, 23));
         root.Add(Label("CHARACTER CHAIN   /   01", 27, 73, 9, Muted));
         root.Add(Label("DEMONSTRACAO AO VIVO", 800, 83, 10, Orange));
-        root.Add(sectionTitle = Label("Sua colecao de presets.", 264, 65, 18));
+
         root.Add(new TrafficLightButton { Skin = LoadSkin("close.png"), Text = "x", Position = new Vector2(960, 35), Action = () => Exit() });
         root.Add(new TrafficLightButton { Skin = LoadSkin("minimize.png"), Text = "-", Position = new Vector2(1004, 35), Action = () => chrome?.Minimize() });
         root.Add(new TrafficLightButton { Skin = LoadSkin("maximize.png"), Text = "+", Position = new Vector2(1048, 35), Action = () => chrome?.ToggleMaximize() });
@@ -62,7 +62,7 @@ public partial class CursorHubGame
             root.Add(sections[i] = new Container { Position = new Vector2(264, 145), Size = new Vector2(235, 260) });
         }
         root.Add(Label("DESKTOP PERSONALIZATION", 27, 367, 9, Muted));
-        root.Add(Label("osu!framework / v0.5.0", 27, 384, 11));
+        root.Add(Label("osu!framework / v0.6.0", 27, 384, 11));
         root.Add(Label("CTRL + SHIFT + X  /  PARAR", 27, 410, 9, Muted));
 
         sections[1].Add(Label("APARENCIA", 0, 0, 11, Muted));
@@ -81,40 +81,44 @@ public partial class CursorHubGame
         sections[2].Add(Label("MOVIMENTO", 0, 0, 11, Muted));
         AddSlider(sections[2], "Duracao do rastro", 34, lifetime, 60, 600, value => lifetime = value, "ms", lifetimeBinding);
         sections[2].Add(Label("Rastro continuo", 0, 133, 16));
-        sections[2].Add(Label("Espacamento interpolado", 0, 159, 12, Muted));
-        sections[2].Add(Label("Ate 256 particulas reutilizadas", 0, 181, 12, Muted));
+        sections[2].Add(Label("Historico real de movimento", 0, 159, 12, Muted));
+        sections[2].Add(Label("Ate 512 particulas reutilizadas", 0, 181, 12, Muted));
 
         sections[3].Add(Label("ORCAMENTO DE RENDERIZACAO", 0, 0, 10, Muted));
-        sections[3].Add(rateButton = MakeButton($"Limite: {selectedRate} Hz", 0, 34, 222, () =>
+        AddSlider(sections[3], "Limite de desenho", 28, selectedRate, 30, 360, value =>
         {
-            selectedRate = selectedRate == 60 ? 120 : 60;
-            rateButton.Text = $"Limite: {selectedRate} Hz";
-            ApplyRate();
-        }));
-        sections[3].Add(economyButton = MakeButton("", 0, 90, 222, () =>
+            selectedRate = value; ApplyRate(); desktop?.SetRate(value);
+        }, "Hz", rateBinding);
+        int[] rates = { 60, 75, 144, 165 };
+        for (int i = 0; i < rates.Length; i++)
         {
-            economy = !economy;
-            UpdateEconomyLabel(); ApplyRate();
+            int rate = rates[i];
+            var shortcut = MakeButton(rate.ToString(), i * 56, 130, 50, () => rateBinding.Value = rate);
+            shortcut.Height = 28;
+            sections[3].Add(shortcut);
+        }
+        sections[3].Add(economyButton = MakeButton("", 0, 174, 222, () =>
+        {
+            economy = !economy; UpdateEconomyLabel(); ApplyRate();
         }));
         UpdateEconomyLabel();
-        sections[3].Add(Label("Economia: 15 Hz quando parado.", 0, 151, 11, Muted));
-        sections[3].Add(Label("Retomada pode levar ate 67 ms.", 0, 174, 11, Muted));
-        sections[3].Add(Label("Desligue para priorizar resposta.", 0, 197, 11, Muted));
+        sections[3].Add(Label("Ajuste ao monitor e ao seu sistema.", 0, 218, 11, Muted));
+        sections[3].Add(Label("Economia: 15 Hz com a previa parada.", 0, 239, 10, Muted));
 
         root.Add(previewCard = new Container
         {
-            Position = new Vector2(800, 104), Size = new Vector2(266, 300),
-            Masking = true, CornerRadius = 5, BorderThickness = 1, BorderColour = new Color4(190, 194, 203, 255),
+            Position = new Vector2(800, 104), Size = new Vector2(266, 266),
+            Masking = true, CornerRadius = 5, BorderThickness = 0, BorderColour = new Color4(190, 194, 203, 255),
             Children = new Drawable[]
             {
                 new Box { RelativeSizeAxes = Axes.Both, Colour = new Color4(255, 255, 255, 255) },
                 
-                new Box { Position = new Vector2(133, 125), Size = new Vector2(1, 50), Colour = new Color4(209, 214, 223, 255) },
-                new Box { Position = new Vector2(108, 150), Size = new Vector2(50, 1), Colour = new Color4(209, 214, 223, 255) },
+                new Sprite { Texture = LoadSkin("demonstration.png"), RelativeSizeAxes = Axes.Both, Size = Vector2.One },
+                
                 
             }
         });
-        root.Add(Label("Mova o mouse nesta area", 800, 414, 11, Muted));
+        root.Add(Label("Mova o mouse nesta area", 800, 386, 11, Muted));
         root.Add(new Box { Position = new Vector2(780, 100), Size = new Vector2(1, 318), Colour = new Color4(207, 211, 219, 255) });
         previewCard.Add(previewPlaceholder = new Sprite { Texture = LoadSkin("cursor.png"), Anchor = Anchor.Centre, Origin = Anchor.Centre, Size = new Vector2(23, 29), Colour = Accent });
         root.Add(status = Label("", 264, 449, 8, Muted));
@@ -131,11 +135,10 @@ public partial class CursorHubGame
 
     private void SelectSection(int index)
     {
-        string[] titles = { "Sua colecao de presets.", "Seu cursor, do seu jeito.", "Deixe sua marca.", "Leve por escolha." };
+
         if (presetMenu is not null) presetMenu.Alpha = 0;
         if (presetEditor is not null) presetEditor.Alpha = 0;
         trail.Clear();
-        sectionTitle.Text = index == 0 && presets.Items.FirstOrDefault(p => p.Id == demonstratedPreset) is { } selected ? selected.Name : titles[index];
         for (int i = 0; i < sections.Length; i++)
         {
             sections[i].Alpha = i == index ? 1 : 0;

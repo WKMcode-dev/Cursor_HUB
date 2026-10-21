@@ -6,6 +6,7 @@
   <ItemGroup>
     <Compile Include="../Core/InterfaceViewport.cs" Link="InterfaceViewport.cs" />
     <Compile Include="../Core/TrailBuffer.cs" Link="TrailBuffer.cs" />
+    <Compile Include="../Windows/MouseHistory.cs" Link="MouseHistory.cs" />
     <Compile Include="../Windows/CursorInput.cs" Link="CursorInput.cs" />
     <Compile Include="../Interface/HubSettings.cs" Link="HubSettings.cs" />
     <Compile Include="../Interface/PresetStore.cs" Link="PresetStore.cs" />

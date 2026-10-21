@@ -17,9 +17,10 @@ namespace CursorHub;
 
 public partial class CursorHubGame : Game
 {
-    private readonly TrailBuffer trail = new();
+    private readonly TrailBuffer trail = new(512);
+    private readonly MotionPoint[] previewMoves = new MotionPoint[64];
     private readonly Stopwatch clock = Stopwatch.StartNew();
-    private readonly Circle[] dots = new Circle[256];
+    private readonly Circle[] dots = new Circle[512];
     private readonly string windowTitle = "Cursor Hub | " + Guid.NewGuid().ToString("N")[..8];
     private Container panel = null!;
     private Box background = null!;
@@ -146,7 +147,21 @@ public partial class CursorHubGame : Game
         bool shouldIdle = now - lastMovement > lifetime + 250;
         if (idle != shouldIdle) { idle = shouldIdle; ApplyRate(); }
 
-        trail.Advance(enabled ? position : null, now, lifetime, Math.Max(2, size * (input?.PixelScale ?? 1) / 4f));
+        float spacing = Math.Max(1, size * (input?.PixelScale ?? 1) / 8f);
+        if (enabled && position.HasValue && !verifyPreviewPointer && input is not null)
+        {
+            int recovered = input.ReadHistory(now, previewMoves);
+            float margin = size * input.PixelScale / (2 * viewport.Scale) + 2;
+            for (int i = 0; i < recovered; i++)
+            {
+                var sample = previewMoves[i];
+                float x = viewport.X(sample.Position.X), y = viewport.Y(sample.Position.Y);
+                bool inside = x >= previewCard.X + margin && x <= previewCard.X + previewCard.Width - margin && y >= previewCard.Y + margin && y <= previewCard.Y + previewCard.Height - margin;
+                trail.Advance(inside ? sample.Position : null, sample.Time, lifetime, spacing);
+            }
+        }
+        else input?.ResetHistory();
+        trail.Advance(enabled ? position : null, now, lifetime, spacing);
         int visibleDots = enabled ? trail.Count : 0;
         for (int i = 0; i < Math.Max(visibleDots, drawnDots); i++)
         {

@@ -10,7 +10,7 @@ internal sealed record HubSettings(int Size = 18, int Lifetime = 180, int Rate =
         try
         {
             var s = JsonSerializer.Deserialize<HubSettings>(File.ReadAllText(FilePath)) ?? new();
-            return s with { Size = Math.Clamp(s.Size, 8, 48), Lifetime = Math.Clamp(s.Lifetime, 60, 600), Rate = s.Rate == 120 ? 120 : 60, Colour = Math.Clamp(s.Colour, 0, 3) };
+            return s with { Size = Math.Clamp(s.Size, 8, 48), Lifetime = Math.Clamp(s.Lifetime, 60, 600), Rate = Math.Clamp(s.Rate, 30, 360), Colour = Math.Clamp(s.Colour, 0, 3) };
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException) { return new(); }
     }

@@ -40,6 +40,10 @@ public partial class CursorHubGame
                 RefreshPresets();
             });
             await Capture("01-presets");
+            await OnGameThread(() => SelectSection(3));
+            await Capture("01b-performance");
+            await OnGameThread(() => { rateBinding.Value = 165; if (selectedRate != 165) throw new Exception("165Hz nao aplicado"); SelectSection(0); });
+            results.Add("Limite configuravel de 165Hz aplicado");
             await OnGameThread(() =>
             {
                 var sample = new CursorPreset(Guid.NewGuid(), "Neon Pulse", CurrentSettings());

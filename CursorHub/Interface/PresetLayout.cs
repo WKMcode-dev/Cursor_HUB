@@ -121,14 +121,13 @@ public partial class CursorHubGame
     private void Demonstrate(CursorPreset preset)
     {
         demonstratedPreset = preset.Id;
-        if (sections[0].Alpha > 0) sectionTitle.Text = preset.Name;
         var s = preset.Settings;
         sizeBinding.Value = Math.Clamp(s.Size, 8, 48);
         lifetimeBinding.Value = Math.Clamp(s.Lifetime, 60, 600);
         colourIndex = Math.Clamp(s.Colour, 0, palette.Length - 1);
-        selectedRate = s.Rate == 120 ? 120 : 60;
+        selectedRate = Math.Clamp(s.Rate, 30, 360);
+        rateBinding.Value = selectedRate;
         economy = s.Economy; UpdateEconomyLabel();
-        rateButton.Text = $"Limite: {selectedRate} Hz";
         trail.Clear(); ApplyRate();
         notice = "Demonstrando: " + preset.Name;
         nextStatus = 0;

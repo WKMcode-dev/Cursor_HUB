@@ -1,10 +1,10 @@
-# Cursor Hub 0.5.0
+# Cursor Hub 0.6.0
 
 Windows / C# / .NET 10 / osu!framework.
 
 ## Versao pronta para Windows
 
-Baixe o ZIP win-x64 na [release v0.5.0](https://github.com/WKMcode-dev/Cursor_HUB/releases/tag/v0.5.0), extraia toda a pasta e abra CursorHub.exe. O runtime do .NET esta incluido; Visual Studio e SDK nao sao necessarios. Mantenha DLLs e Assets junto do executavel.
+Baixe o ZIP win-x64 na [release v0.6.0](https://github.com/WKMcode-dev/Cursor_HUB/releases/tag/v0.6.0), extraia toda a pasta e abra CursorHub.exe. O runtime do .NET esta incluido; Visual Studio e SDK nao sao necessarios. Mantenha DLLs e Assets junto do executavel.
 
 ## Executar o codigo-fonte
 
@@ -77,7 +77,7 @@ A troca do cursor do sistema e a apresentacao do rastro foram desacopladas. Falh
 Verificacao desta entrega: compilacao sem erros; capturas internas sem pixels pretos na regiao opaca; 3077 pixels de alfa parcial presentes na borda no tamanho testado; compositor global apresentou 12 quadros e permaneceu ativo ao minimizar mesmo com SetSystemCursor negado. Nao houve teste direto dentro de um jogo. Tela cheia exclusiva, cursores proprios dos jogos e politicas de sobreposicao podem limitar a exibicao; use janela sem bordas para testar.
 
 
-## Correcao 0.5.0: visibilidade acima de outras janelas
+## Correcao 0.6.0: visibilidade acima de outras janelas
 
 A camada global nasce com WS_EX_TOPMOST e recebe ShowWindow(SW_SHOWNOACTIVATE) antes da reafirmacao da ordem de janelas. SetWindowPos agora tem retorno verificado, assim como IsWindowVisible e a flag topmost. Uma falha passa a aparecer como erro em vez de ser confundida com apresentacao bem-sucedida. O worker usa coordenadas fisicas por monitor para evitar deslocamentos em escalas DPI diferentes.
 
@@ -87,14 +87,20 @@ DIAGNOSTICO.cmd executa esse teste e grava diagnostico-overlay/overlay-results.j
 
 Feche a versao anterior antes de iniciar a nova. A partir desta versao uma segunda instancia exibe um aviso, em vez de encerrar silenciosamente. Jogos em tela cheia exclusiva continuam sem suporte garantido; use janela sem bordas. Nao ha tentativa de contornar restricoes de sobreposicao de jogos.
 
-## Visual Character Chain / 0.5.0
+## Visual Character Chain / 0.6.0
 
 Paleta perolada com texto grafite, ciano, rosa e lavanda. Grade de 24 slots por pagina, miniaturas compartilhadas, indicacao do preset demonstrado e menu lateral de acoes. As posicoes livres nao representam presets salvos. Os arquivos pessoais existentes sao preservados. A previa compacta no topo da colecao responde ao mouse; Cursor, Rastro e Desempenho ampliam a previa.
 
 Os vetores originais em Tools/Art geram PNGs de alta resolucao uma unica vez. O app carrega e compartilha cada textura por nome. Nao ha shaders animados, blur ou geracao de imagens em tempo de execucao. A pre-visualizacao atualiza apenas os pontos ativos, e o rasterizador do desktop calcula raiz quadrada somente na borda suavizada das particulas. A comparacao automatizada verifica os pixels com a formula anterior; isso nao substitui medicoes de CPU/GPU e latencia em hardware real.
 
-## 0.5.0: SVGs originais e escala proporcional
+## 0.6.0: SVGs originais e escala proporcional
 
 Cards quadrados e barra vertical de acoes usam os SVGs fornecidos pelo autor. A barra oferece Excluir, Editar e Demonstrar (de cima para baixo). As bolinhas da janela derivam do SVG Preset_use. O layout agora tem 1100x500 unidades, com demonstracao permanente a direita. Ao maximizar, uma unica escala preserva as proporcoes; espacos excedentes ficam transparentes, fora da regiao de cliques. O tamanho do cursor da previa e medido em pixels fisicos, independente da escala da interface.
 
 A verificacao automatizada confere 8 px antes e depois de maximizar e restaurar, alem do recorte e do compositor global. Os vetores fonte ficam em Tools/Art e sao rasterizados somente no desenvolvimento.
+
+## 0.6.0
+
+Limite manual de 30 a 360Hz (atalhos 60,75,144,165), aplicado ao rastro ativo sem trocar novamente o cursor. A frequencia real depende da capacidade do sistema. A taxa nao altera as configuracoes do monitor. A economia da previa parada continua separada do compositor.
+
+MouseHistory usa GetMouseMovePointsEx (Microsoft Learn: https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getmousemovepointsex) para recuperar posicoes intermediarias reais. Historico de ate64pontos, ordem cronologica, descarte de tempos antigos e tratamento de coordenadas negativas. Falha na API recai na captura atual; nao se aplica spline que invente o trajeto. O buffer de512pontos limita memoria e trabalho, podendo descartar o inicio de um rastro longo em movimentos muito rapidos.

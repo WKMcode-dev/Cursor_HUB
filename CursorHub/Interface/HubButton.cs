@@ -41,6 +41,11 @@ public partial class HubButton : BasicButton
             skin.Texture = value;
         }
     }
+    protected override void Update()
+    {
+        base.Update();
+        if (skin is not null) { Background.ClearTransforms(); Background.Alpha = 0; }
+    }
     protected override SpriteText CreateText() => new()
     {
         Anchor = Anchor.Centre, Origin = Anchor.Centre,

@@ -36,6 +36,12 @@ internal sealed class DesktopEffects : IDisposable
         if (!thread.IsAlive) { Volatile.Write(ref error, error ?? "A camada global nao esta disponivel."); return; }
         Volatile.Write(ref error, null); Volatile.Write(ref warning, null); Volatile.Write(ref requested, options); wake.Set();
     }
+    public void SetRate(int rate)
+    {
+        var current = Volatile.Read(ref requested);
+        if (current is not null) Interlocked.CompareExchange(ref requested, current with { Rate = Math.Clamp(rate, 30, 360) }, current);
+        wake.Set();
+    }
     public void Stop() { Volatile.Write(ref requested, null); wake.Set(); }
 
     private void Run()
@@ -45,7 +51,10 @@ internal sealed class DesktopEffects : IDisposable
             SetThreadDpiAwarenessContext(-4); // Physical screen coordinates, including mixed-DPI displays.
             using var surface = new LayeredSurface();
             using var cursors = new CursorController();
-            var trail = new TrailBuffer(256);
+            using var pacer = new FramePacer();
+            var trail = new TrailBuffer(512);
+            var history = new MouseHistory();
+            var moves = new MotionPoint[64];
             var clock = Stopwatch.StartNew();
             EffectOptions? applied = null;
             LayeredSurface.Point? last = null;
@@ -59,7 +68,7 @@ internal sealed class DesktopEffects : IDisposable
                 chordHeld = chord;
                 if (settings is null)
                 {
-                    if (applied is not null) { cursors.Restore(); surface.Hide(); trail.Clear(); applied = null; last = null; visible = false; }
+                    if (applied is not null) { cursors.Restore(); surface.Hide(); trail.Clear(); history.Reset(); applied = null; last = null; visible = false; }
                     active = false;
                     wake.WaitOne(60);
                     continue;
@@ -68,7 +77,8 @@ internal sealed class DesktopEffects : IDisposable
                 {
                     if (applied != settings)
                     {
-                        if (settings.CustomizeCursor)
+                        bool changedCursor = applied is null || applied.Size != settings.Size || applied.R != settings.R || applied.G != settings.G || applied.B != settings.B || applied.CustomizeCursor != settings.CustomizeCursor;
+                        if (changedCursor && settings.CustomizeCursor)
                         {
                             try { cursors.Apply(settings); }
                             catch (Exception exception)
@@ -78,7 +88,7 @@ internal sealed class DesktopEffects : IDisposable
                                 Volatile.Write(ref warning, "Rastro ativo; Windows manteve o cursor original: " + exception.Message);
                             }
                         }
-                        else cursors.Restore();
+                        else if (changedCursor) cursors.Restore();
                         applied = settings;
                     }
                     active = true;
@@ -88,7 +98,13 @@ internal sealed class DesktopEffects : IDisposable
                     else if (!LayeredSurface.GetCursorPos(out point)) { surface.Hide(); wake.WaitOne(30); continue; }
                     bool moved = last is null || point.X != last.Value.X || point.Y != last.Value.Y;
                     last = point;
-                    trail.Advance(new Vector2(point.X, point.Y), frameStart, settings.Lifetime, Math.Max(2, settings.Size / 4f));
+                    float spacing = Math.Max(1, settings.Size / 8f);
+                    if (probePosition is null)
+                    {
+                        int count = history.Read(point.X, point.Y, frameStart, moves);
+                        for (int i = 0; i < count; i++) trail.Advance(moves[i].Position, moves[i].Time, settings.Lifetime, spacing);
+                    }
+                    trail.Advance(new Vector2(point.X, point.Y), frameStart, settings.Lifetime, spacing);
                     if (moved || trail.Count > 0)
                     {
                         int padding = settings.Size + 3;
@@ -117,7 +133,7 @@ internal sealed class DesktopEffects : IDisposable
                     else if (visible) { surface.Hide(); visible = false; }
                     double elapsed = clock.Elapsed.TotalMilliseconds - frameStart;
                     // Poll at the selected rate even when stationary: native cursor remains responsive.
-                    wake.WaitOne(Math.Max(1, (int)(1000.0 / settings.Rate - elapsed)));
+                    pacer.Wait(1000.0 / Math.Clamp(settings.Rate, 30, 360) - elapsed, wake);
                 }
                 catch (Exception exception)
                 {
