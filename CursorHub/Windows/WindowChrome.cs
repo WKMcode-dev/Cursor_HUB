@@ -1,3 +1,4 @@
+using CursorHub.Core;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -161,10 +162,11 @@ internal sealed class WindowChrome : IDisposable
         try
         {
             if (GetWindowRgn(handle, region) == 0) throw new InvalidOperationException("Regiao nativa ausente.");
-            bool Contains(int x, int y) => PtInRegion(region, x * client.Right / 800, y * client.Bottom / 500);
-            if (!Contains(669, 44) || !Contains(713, 44) || !Contains(757, 44) || !Contains(710, 465))
+            var fit = InterfaceViewport.Fit(client.Right, client.Bottom);
+            bool Contains(int x, int y) => PtInRegion(region, (int)(fit.Left + x * fit.Scale), (int)(fit.Top + y * fit.Scale));
+            if (!Contains(969, 44) || !Contains(1013, 44) || !Contains(1057, 44) || !Contains(1010, 465))
                 throw new InvalidOperationException("Ilhas de controle cortadas.");
-            if (Contains(620, 35) || Contains(640, 480)) throw new InvalidOperationException("Recortes indevidamente preenchidos.");
+            if (Contains(920, 35) || Contains(940, 480)) throw new InvalidOperationException("Recortes indevidamente preenchidos.");
         }
         finally { DeleteObject(region); }
     }

@@ -27,6 +27,7 @@ public partial class HubButton : BasicButton
         SpriteText.X = left;
         SpriteText.Font = new FontUsage(size: size);
     }
+    public Color4 SkinColour { set { if (skin is not null) skin.Colour = value; } }
     public Color4 TextColour { set => SpriteText.Colour = value; }
     public Texture Skin
     {

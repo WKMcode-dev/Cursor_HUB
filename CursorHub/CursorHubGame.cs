@@ -51,7 +51,7 @@ public partial class CursorHubGame : Game
     {
         config.SetValue(FrameworkSetting.FrameSync, FrameSync.Unlimited);
         config.SetValue(FrameworkSetting.WindowMode, WindowMode.Windowed);
-        config.SetValue(FrameworkSetting.WindowedSize, new System.Drawing.Size(960, 600));
+        config.SetValue(FrameworkSetting.WindowedSize, new System.Drawing.Size(1320, 600));
         var saved = HubSettings.Load();
         size = saved.Size; lifetime = saved.Lifetime; selectedRate = saved.Rate;
         colourIndex = saved.Colour; economy = saved.Economy;
@@ -73,6 +73,7 @@ public partial class CursorHubGame : Game
             chrome.Sync(Host.Window.ClientSize.Width, Host.Window.ClientSize.Height);
         }
         catch (Exception error) { notice = "Falha no recorte: " + error.Message; }
+        panel.Scale = new Vector2(InterfaceViewport.Fit(DrawWidth, DrawHeight).Scale);
         lastMovement = clock.Elapsed.TotalMilliseconds;
         ApplyRate();
         if (VerificationDirectory is not null) _ = Verify();
@@ -107,6 +108,8 @@ public partial class CursorHubGame : Game
     {
         base.Update();
         double now = clock.Elapsed.TotalMilliseconds;
+        var viewport = InterfaceViewport.Fit(DrawWidth, DrawHeight);
+        if (panel.Scale.X != viewport.Scale) { panel.Scale = new Vector2(viewport.Scale); trail.Clear(); }
         chrome?.Sync();
         if (desktop?.Active == true)
         {
@@ -129,11 +132,13 @@ public partial class CursorHubGame : Game
             notice = "Cursor global parado"; nextStatus = 0;
         }
         var position = input?.Cursor(DrawWidth, DrawHeight);
+        if (verifyPreviewPointer) position = new System.Numerics.Vector2(viewport.Left + (previewCard.X + previewCard.Width / 2) * viewport.Scale, viewport.Top + (previewCard.Y + previewCard.Height / 2) * viewport.Scale);
         if (position is { } previewPoint)
         {
-            float x = previewPoint.X * 800 / DrawWidth, y = previewPoint.Y * 500 / DrawHeight;
+            float x = viewport.X(previewPoint.X), y = viewport.Y(previewPoint.Y);
+            float margin = size * (input?.PixelScale ?? 1) / (2 * viewport.Scale) + 2;
             var bounds = previewCard;
-            if (x < bounds.X + 4 || x > bounds.X + bounds.Width - 4 || y < bounds.Y + 4 || y > bounds.Y + bounds.Height - 4 || presetEditor.Alpha > 0 || presetMenu.Alpha > 0) position = null;
+            if (x < bounds.X + margin || x > bounds.X + bounds.Width - margin || y < bounds.Y + margin || y > bounds.Y + bounds.Height - margin || presetEditor.Alpha > 0 || presetMenu.Alpha > 0) position = null;
         }
         bool moved = position != lastPosition;
         if (moved) lastMovement = now;
@@ -141,7 +146,7 @@ public partial class CursorHubGame : Game
         bool shouldIdle = now - lastMovement > lifetime + 250;
         if (idle != shouldIdle) { idle = shouldIdle; ApplyRate(); }
 
-        trail.Advance(enabled ? position : null, now, lifetime, Math.Max(2, size / 4f));
+        trail.Advance(enabled ? position : null, now, lifetime, Math.Max(2, size * (input?.PixelScale ?? 1) / 4f));
         int visibleDots = enabled ? trail.Count : 0;
         for (int i = 0; i < Math.Max(visibleDots, drawnDots); i++)
         {
@@ -150,7 +155,7 @@ public partial class CursorHubGame : Game
             var sample = trail[i];
             float remaining = Math.Clamp(1 - (float)((now - sample.Born) / lifetime), 0, 1);
             dot.Position = new Vector2(sample.Position.X, sample.Position.Y);
-            dot.Size = new Vector2(size * (DrawWidth / 800) * (0.25f + remaining * 0.65f));
+            dot.Size = new Vector2(size * (input?.PixelScale ?? 1) * (0.25f + remaining * 0.65f));
             dot.Colour = Accent;
             dot.Alpha = remaining * 0.65f;
         }
@@ -161,7 +166,7 @@ public partial class CursorHubGame : Game
         if (position is { } p)
         {
             cursor.Position = new Vector2(p.X, p.Y);
-            cursor.Size = new Vector2(size * (DrawWidth / 800));
+            cursor.Size = new Vector2(size * (input?.PixelScale ?? 1));
             cursor.Colour = Accent;
         }
         if (now >= nextStatus)

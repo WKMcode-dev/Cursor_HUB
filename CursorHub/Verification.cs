@@ -1,3 +1,4 @@
+using CursorHub.Core;
 using System.Text.Json;
 using CursorHub.Interface;
 using CursorHub.Windows;
@@ -9,6 +10,7 @@ public partial class CursorHubGame
 {
     public string? VerificationDirectory { get; set; }
     public bool VerifyUiOnly { get; set; }
+    private bool verifyPreviewPointer;
     private Task OnGameThread(Action action)
     {
         var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -53,10 +55,22 @@ public partial class CursorHubGame
             if (chrome!.SoftEdgePixels == 0) throw new Exception("Borda alfa ausente");
             results.Add($"Bordas com {chrome.SoftEdgePixels} pixels de alfa parcial");
             await OnGameThread(() => chrome!.VerifyCutouts()); results.Add("Regiao nativa preserva controles e vazios dos recortes");
+            await OnGameThread(() => { sizeBinding.Value = 8; verifyPreviewPointer = true; });
+            await Capture("05-cursor-8px-windowed");
+            void CheckCursorPixels()
+            {
+                float pixelSize = cursor.DrawWidth / (input?.PixelScale ?? 1);
+                if (Math.Abs(pixelSize - 8) > .01f) throw new Exception($"Cursor de 8px foi escalado para {pixelSize}");
+                if (Math.Abs(panel.Scale.X - panel.Scale.Y) > .0001f) throw new Exception("Interface esticada");
+                results.Add($"Cursor com {pixelSize} px fisicos; escala uniforme {panel.Scale.X:F3}");
+            }
+            await OnGameThread(CheckCursorPixels);
             await OnGameThread(() => chrome!.ToggleMaximize());
             await Capture("05-maximized");
+            await OnGameThread(CheckCursorPixels);
             await OnGameThread(() => chrome!.ToggleMaximize());
-            await Capture("06-unmaximized"); results.Add("Maximizar/restaurar executados");
+            await Capture("06-unmaximized");
+            await OnGameThread(() => { CheckCursorPixels(); verifyPreviewPointer = false; }); results.Add("Maximizar/restaurar executados");
             if (VerifyUiOnly) return;
             await OnGameThread(TogglePlay);
             await Task.Delay(1700);

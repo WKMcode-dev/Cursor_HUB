@@ -22,16 +22,16 @@ public partial class CursorHubGame
 
     private void InitializePresets(Container root)
     {
-        sections[0].Position = new Vector2(264, 128);
-        sections[0].Size = new Vector2(512, 308);
-        sections[0].Add(presetRows = new Container { Size = new Vector2(512, 284) });
-        var previous = MakeButton("<", 0, 290, 28, () => { presetPage = Math.Max(0, presetPage - 1); RefreshPresets(); });
-        var next = MakeButton(">", 34, 290, 28, () => { presetPage = Math.Min(Math.Max(0, (presets.Items.Count) / PresetsPerPage), presetPage + 1); RefreshPresets(); });
+        sections[0].Position = new Vector2(264, 100);
+        sections[0].Size = new Vector2(512, 344);
+        sections[0].Add(presetRows = new Container { Size = new Vector2(512, 318) });
+        var previous = MakeButton("<", 0, 324, 28, () => { presetPage = Math.Max(0, presetPage - 1); RefreshPresets(); });
+        var next = MakeButton(">", 34, 324, 28, () => { presetPage = Math.Min(Math.Max(0, (presets.Items.Count) / PresetsPerPage), presetPage + 1); RefreshPresets(); });
         previous.Height = next.Height = 20;
         sections[0].Add(previous); sections[0].Add(next);
-        sections[0].Add(presetCounter = Label("", 74, 295, 9, Muted));
-        root.Add(presetMenu = new Container { Size = new Vector2(114, 108), Alpha = 0, Depth = -40 });
-        root.Add(presetEditor = new Container { Position = new Vector2(430, 100), Size = new Vector2(334, 320), Alpha = 0, Depth = -50 });
+        sections[0].Add(presetCounter = Label("", 74, 329, 9, Muted));
+        root.Add(presetMenu = new Container { Size = new Vector2(23.0625f, 72), Alpha = 0, Depth = -40 });
+        root.Add(presetEditor = new Container { Position = new Vector2(420, 98), Size = new Vector2(334, 320), Alpha = 0, Depth = -50 });
         RefreshPresets();
     }
 
@@ -45,41 +45,42 @@ public partial class CursorHubGame
         var page = presets.Items.Skip(presetPage * PresetsPerPage).Take(PresetsPerPage).ToArray();
         for (int cell = 0; cell < PresetsPerPage; cell++)
         {
-            float x = (cell % 6) * 85, y = (cell / 6) * 74;
+            float x = (cell % 6) * 85, y = (cell / 6) * 82;
             if (cell < page.Length)
             {
                 var preset = page[cell];
-                var card = new Container { Position = new Vector2(x, y), Size = new Vector2(72, 62) };
+                var card = new Container { Position = new Vector2(x, y), Size = new Vector2(72, 72) };
                 var button = MakeButton("", 0, 0, 72, () => { presetMenu.Alpha = 0; Demonstrate(preset); RefreshPresets(); });
-                button.Height = 62;
-                button.BackgroundColour = preset.Id == demonstratedPreset ? new Color4(221, 241, 243, 255) : Color4.White;
+                button.Height = 72;
+                button.Skin = LoadSkin("preset-card.png");
+                button.SkinColour = preset.Id == demonstratedPreset ? new Color4(221, 241, 243, 255) : Color4.White;
                 card.Add(button);
                 card.Add(new osu.Framework.Graphics.Sprites.Sprite
                 {
-                    Texture = LoadSkin("cursor.png"), Position = new Vector2(20, 10), Size = new Vector2(24, 30),
+                    Texture = LoadSkin("cursor.png"), Position = new Vector2(20, 16), Size = new Vector2(24, 30),
                     Colour = palette[Math.Clamp(preset.Settings.Colour, 0, palette.Length - 1)]
                 });
                 var name = preset.Name.Length > 9 ? preset.Name[..8] + ".." : preset.Name;
-                card.Add(Label(name, 6, 46, 8));
+                card.Add(Label(name, 6, 57, 8));
                 int selectedCell = cell;
-                var menu = MakeButton("", 55, 34, 16, () => OpenPresetMenu(preset, selectedCell));
+                var menu = MakeButton("", 55, 44, 16, () => OpenPresetMenu(preset, selectedCell));
                 menu.Height = 26;
                 menu.BorderThickness = 0;
-                menu.Skin = LoadSkin("dots.png");
+                menu.Skin = LoadSkin("preset-menu.png");
                 card.Add(menu);
                 presetRows.Add(card);
             }
             else if (cell == page.Length && presets.Items.Count < 128)
             {
                 var add = MakeButton("+", x, y, 72, () => OpenPresetEditor(null));
-                add.Height = 62;
+                add.Height = 72;
                 presetRows.Add(add);
-                presetRows.Add(Label("NOVO", x + 23, y + 46, 8, Muted));
+                presetRows.Add(Label("NOVO", x + 23, y + 57, 8, Muted));
             }
             else
             {
                 // Empty slots are static geometry, never fictitious saved presets.
-                var empty = new Container { Position = new Vector2(x, y), Size = new Vector2(72, 62), Masking = true, CornerRadius = 4, BorderThickness = 1, BorderColour = new Color4(221, 224, 230, 255) };
+                var empty = new Container { Position = new Vector2(x, y), Size = new Vector2(72, 72), Masking = true, CornerRadius = 4, BorderThickness = 1, BorderColour = new Color4(228, 229, 232, 255) };
                 empty.Add(new Box { RelativeSizeAxes = Axes.Both, Colour = new Color4(244, 245, 248, 255) });
                 empty.Add(Label("+", 31, 21, 13, new Color4(196, 201, 210, 255)));
                 presetRows.Add(empty);
@@ -94,23 +95,24 @@ public partial class CursorHubGame
         presetMenu.Clear();
         int cell = (int)rowY;
         float tileX = 264 + (cell % 6) * 85;
-        float menuX = tileX + 76;
-        if (menuX + 114 > 782) menuX = tileX - 118;
-        presetMenu.Position = new Vector2(menuX, Math.Min(128 + (cell / 6) * 74, 310));
-        presetMenu.Add(new Box { RelativeSizeAxes = Axes.Both, Colour = new Color4(30, 34, 43, 255) });
-        void Item(string text, int y, Action action)
+        float menuX = tileX + 74;
+        if (menuX + presetMenu.Width > 776) menuX = tileX - presetMenu.Width - 2;
+        presetMenu.Position = new Vector2(menuX, 100 + (cell / 6) * 82);
+        presetMenu.Add(new Sprite { Texture = LoadSkin("preset-toolbar.png"), RelativeSizeAxes = Axes.Both, Size = Vector2.One });
+        void Item(string skin, int y, Action action)
         {
-            var item = MakeButton(text, 3, y, 108, action);
-            item.Height = 32;
+            var item = MakeButton("", 0, y, 23, action);
+            item.Height = 24;
+            item.Skin = LoadSkin(skin);
             presetMenu.Add(item);
         }
-        Item(">  Demonstrar", 3, () => { Demonstrate(preset); presetMenu.Alpha = 0; RefreshPresets(); });
-        Item("/  Editar", 38, () => { presetMenu.Alpha = 0; OpenPresetEditor(preset); });
-        Item("x  Excluir", 73, () =>
+        Item("preset-trash.png", 0, () =>
         {
             try { presets.Remove(preset.Id); if (demonstratedPreset == preset.Id) demonstratedPreset = null; presetMenu.Alpha = 0; RefreshPresets(); notice = "Preset excluido"; nextStatus = 0; }
             catch (Exception e) { notice = e.Message; nextStatus = 0; }
         });
+        Item("preset-edit.png", 24, () => { presetMenu.Alpha = 0; OpenPresetEditor(preset); });
+        Item("preset-use.png", 48, () => { Demonstrate(preset); presetMenu.Alpha = 0; RefreshPresets(); });
         presetMenu.Alpha = 1;
     }
 

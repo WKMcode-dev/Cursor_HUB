@@ -1,3 +1,4 @@
+using CursorHub.Core;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
@@ -31,15 +32,16 @@ internal sealed class ChromeMask
         }
         layers = new[]
         {
-            Load("frame.png", 0, 0, 800, 500),
-            Load("close.png", 660, 35, 18, 18), Load("minimize.png", 704, 35, 18, 18),
-            Load("maximize.png", 748, 35, 18, 18), Load("play.png", 650, 444, 136, 42)
+            Load("frame.png", 0, 0, 1100, 500),
+            Load("close.png", 960, 35, 18, 18), Load("minimize.png", 1004, 35, 18, 18),
+            Load("maximize.png", 1048, 35, 18, 18), Load("play.png", 950, 444, 136, 42)
         };
     }
 
     public bool Includes(int px, int py, int width, int height)
     {
-        double x = (px + .5) * 800 / width, y = (py + .5) * 500 / height;
+        var fit = InterfaceViewport.Fit(width, height);
+        double x = fit.X(px + .5f), y = fit.Y(py + .5f);
         foreach (var layer in layers)
         {
             if (x < layer.X || y < layer.Y || x >= layer.X + layer.Width || y >= layer.Y + layer.Height) continue;
@@ -58,7 +60,8 @@ internal sealed class ChromeMask
     internal uint Fringe(int px, int py, int width, int height)
     {
         if (Includes(px, py, width, height)) return 0;
-        double x = (px + .5) * 800 / width, y = (py + .5) * 500 / height;
+        var fit = InterfaceViewport.Fit(width, height);
+        double x = fit.X(px + .5f), y = fit.Y(py + .5f);
         foreach (var layer in layers)
         {
             if (x < layer.X || y < layer.Y || x >= layer.X + layer.Width || y >= layer.Y + layer.Height) continue;

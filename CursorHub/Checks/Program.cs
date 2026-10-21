@@ -87,3 +87,12 @@ finally
         foreach (var file in Directory.GetFiles(tempDirectory)) File.Delete(file);
     if (Directory.Exists(tempDirectory)) Directory.Delete(tempDirectory);
 }
+
+foreach (var dimensions in new[] { (1320f, 600f), (1920f, 1080f), (1024f, 768f), (1000f, 1600f) })
+{
+    var fit = InterfaceViewport.Fit(dimensions.Item1, dimensions.Item2);
+    float renderedWidth = InterfaceViewport.Width * fit.Scale, renderedHeight = InterfaceViewport.Height * fit.Scale;
+    Check(renderedWidth <= dimensions.Item1 + .01 && renderedHeight <= dimensions.Item2 + .01, "viewport cabe sem esticar");
+    Check(Math.Abs(renderedWidth / renderedHeight - 2.2f) < .0001, "proporcao da interface preservada");
+    Check(Math.Abs(fit.X(fit.Left + 933 * fit.Scale) - 933) < .001f && Math.Abs(fit.Y(fit.Top + 254 * fit.Scale) - 254) < .001f, "hit test e renderizacao usam a mesma escala");
+}
