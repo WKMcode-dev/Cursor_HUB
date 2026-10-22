@@ -37,5 +37,5 @@ public partial class HubSlider : Container
     protected override bool OnMouseDown(MouseDownEvent e){if(e.Button!=osuTK.Input.MouseButton.Left)return false;Pick(e.ScreenSpaceMousePosition);return true;}
     protected override bool OnDragStart(DragStartEvent e)=>e.Button==osuTK.Input.MouseButton.Left;
     protected override void OnDrag(DragEvent e)=>Pick(e.ScreenSpaceMousePosition);
-    protected override void Dispose(bool disposing){current.UnbindValueChanged(changed);base.Dispose(disposing);}
+    protected override void Dispose(bool disposing){current.ValueChanged-=changed;base.Dispose(disposing);}
 }
