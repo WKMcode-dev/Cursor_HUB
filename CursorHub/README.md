@@ -105,7 +105,7 @@ Limite manual de 30 a 360Hz (atalhos 60,75,144,165), aplicado ao rastro ativo se
 
 MouseHistory usa GetMouseMovePointsEx (Microsoft Learn: https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getmousemovepointsex) para recuperar posicoes intermediarias reais. Historico de ate64pontos, ordem cronologica, descarte de tempos antigos e tratamento de coordenadas negativas. Falha na API recai na captura atual; nao se aplica spline que invente o trajeto. O buffer de512pontos limita memoria e trabalho, podendo descartar o inicio de um rastro longo em movimentos muito rapidos.
 
-## Atualizacao 0.8.0
+## Atualizacao 0.8.1
 
 O tema muda imediatamente e preserva os ajustes e a secao aberta. O Play mostra
 INICIANDO, STOP ou PARANDO conforme a confirmacao do compositor; cliques durante

@@ -1,4 +1,4 @@
-Cursor Hub 0.8.0 — Windows x64 portatil (pre-release)
+Cursor Hub 0.8.1 — Windows x64 portatil (pre-release)
 
 - Tema aplicado imediatamente, inclusive com janela maximizada.
 - Estados versionados de Play/Stop: respostas atrasadas nao sobrescrevem novos pedidos.
