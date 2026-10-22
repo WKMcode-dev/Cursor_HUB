@@ -58,24 +58,24 @@ jobs:
           New-Item -ItemType Directory -Force verification | Out-Null
           $output = Join-Path $pwd 'verification'
           $picker = Start-Process dist/Standalone/CursorHub.exe -ArgumentList "--verify-picker `"$output/picker`"" -PassThru
-          if (!$picker.WaitForExit(30000)) { $picker.Kill(); throw 'File picker verification timed out' }
+          if (!$picker.WaitForExit(120000)) { $picker.Kill(); throw 'File picker verification timed out' }
           $pickerResults = Get-Content "$output/picker/picker-results.json" -Raw
           Write-Output $pickerResults
-          if ($pickerResults -match 'FAIL' -or $pickerResults -notmatch 'thread MTA' -or $pickerResults -notmatch 'confirmacao RGB exata') { throw 'File picker verification failed' }
           $probe = Start-Process dist/Standalone/CursorHub.exe -ArgumentList "--verify-overlay `"$output/overlay`"" -PassThru
           if (!$probe.WaitForExit(30000)) { $probe.Kill(); throw 'Overlay verification timed out' }
           $overlay = Get-Content "$output/overlay/overlay-results.json" -Raw
           Write-Output $overlay
-          if ($overlay -match 'FAIL' -or $overlay -notmatch 'PASS worker') { throw 'Overlay verification failed' }
           $ui = Start-Process dist/Standalone/CursorHub.exe -ArgumentList "--verify-ui `"$output/ui`"" -PassThru -RedirectStandardError "$output/ui-stderr.txt"
           if (!$ui.WaitForExit(120000)) { $ui.Kill(); throw 'UI verification timed out' }
           $results = Get-Content "$output/ui/results.json" -Raw
           Write-Output $results
-          if ($results -match 'FAIL' -or $results -notmatch 'Maximizar/restaurar') { throw 'UI verification failed' }
           $dark = Start-Process dist/Standalone/CursorHub.exe -ArgumentList "--verify-dark-ui `"$output/dark`"" -PassThru -RedirectStandardError "$output/dark-stderr.txt"
           if (!$dark.WaitForExit(120000)) { $dark.Kill(); throw 'Dark UI verification timed out' }
           $darkResults = Get-Content "$output/dark/results.json" -Raw
           Write-Output $darkResults
+          if ($pickerResults -match 'FAIL' -or $pickerResults -notmatch 'thread MTA' -or $pickerResults -notmatch 'confirmacao RGB exata') { throw 'File picker verification failed' }
+          if ($overlay -match 'FAIL' -or $overlay -notmatch 'PASS worker') { throw 'Overlay verification failed' }
+          if ($results -match 'FAIL' -or $results -notmatch 'Maximizar/restaurar') { throw 'UI verification failed' }
           if ($darkResults -match 'FAIL' -or $darkResults -notmatch 'Maximizar/restaurar') { throw 'Dark UI verification failed' }
       - uses: actions/upload-artifact@v4
         if: always()

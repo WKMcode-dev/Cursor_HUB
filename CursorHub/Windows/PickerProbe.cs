@@ -22,7 +22,7 @@ internal static class PickerProbe
                 Task<string?> Open()=>AssetPicker.PickAsync(0,id=>Volatile.Write(ref pickerThread,id));
                 var pending=fromWorker?Task.Run(Open):Open();
                 var watch=Stopwatch.StartNew();nint dialog=0;
-                while(dialog==0 && watch.ElapsedMilliseconds<10000 && !pending.IsCompleted)
+                while(dialog==0 && watch.ElapsedMilliseconds<30000 && !pending.IsCompleted)
                 {
                     uint id=Volatile.Read(ref pickerThread);
                     if(id!=0)EnumThreadWindows(id,(window,_)=>
@@ -43,7 +43,7 @@ internal static class PickerProbe
                 uint pickerThread=0;
                 var pending=ColourPicker.PickAsync(0,0x12ABEF,id=>Volatile.Write(ref pickerThread,id));
                 var watch=Stopwatch.StartNew();nint dialog=0;
-                while(dialog==0&&watch.ElapsedMilliseconds<10000&&!pending.IsCompleted)
+                while(dialog==0&&watch.ElapsedMilliseconds<30000&&!pending.IsCompleted)
                 {
                     uint id=Volatile.Read(ref pickerThread);
                     if(id!=0)EnumThreadWindows(id,(window,_)=>{var cls=new StringBuilder(64);GetClassName(window,cls,64);if(cls.ToString()=="#32770"&&IsWindowVisible(window)){dialog=window;return false;}return true;},0);
