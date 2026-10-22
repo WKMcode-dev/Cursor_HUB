@@ -43,7 +43,9 @@ public partial class CursorHubGame
         if(choosingColour)return;choosingColour=true;
         try
         {
-            uint? colour=await ColourPicker.PickAsync(CursorInput.FindWindow(null,windowTitle),initial);
+            verificationColourThread=0;
+            uint? colour=await ColourPicker.PickAsync(CursorInput.FindWindow(null,windowTitle),initial,
+                VerificationDirectory is null ? null : id=>Volatile.Write(ref verificationColourThread,id));
             if(colour is {} value)await OnGameThread(()=>{apply(value);notice="Cor aplicada. Salve os ajustes ou o preset.";nextStatus=0;});
         }
         catch(Exception e){await OnGameThread(()=>{notice=e.Message;nextStatus=0;});}
@@ -55,3 +57,4 @@ public partial class CursorHubGame
         return LoadSkin("particle.png");
     }
 }
+

@@ -57,7 +57,10 @@ public partial class CursorHubGame : Game
             new osu.Framework.IO.Stores.ResourceStore<byte[]>(new osu.Framework.IO.Stores.StorageBackedResourceStore(
                 new osu.Framework.Platform.NativeStorage(AssetPaths.Directory))), "Fonts/KodeMono"), scaleAdjust:48));
         if(VerificationDirectory is not null)presets=new PresetStore(Path.Combine(VerificationDirectory,"presets.json"));
-        var saved = HubSettings.Load();
+        var saved = HubSettings.Load(VerificationDirectory is null ? null : Path.Combine(VerificationDirectory,"settings.json"));
+        demonstratedPreset=presets.Items.FirstOrDefault(p=>p.Settings==saved)?.Id;
+        presetPage=Math.Max(0,presets.Items.FindIndex(p=>p.Id==demonstratedPreset)/PresetsPerPage);
+        if(VerificationDirectory is not null)preferences=new AppPreferences();
         darkTheme=ForceDarkVerification || preferences.DarkTheme;HubButton.DarkTheme=darkTheme;HubButton.Animations=preferences.Animations;
         cursorImage=saved.CursorImage;trailImage=saved.TrailImage;hotX=Math.Clamp(saved.HotX,0,1);hotY=Math.Clamp(saved.HotY,0,1);
         try{cursorArt=cursorImage is null?null:RasterAsset.Load(cursorImage);trailArt=trailImage is null?null:RasterAsset.Load(trailImage);}catch{cursorImage=trailImage=null;cursorArt=trailArt=null;}
@@ -200,4 +203,5 @@ public partial class CursorHubGame : Game
         base.Dispose(isDisposing);
     }
 }
+
 

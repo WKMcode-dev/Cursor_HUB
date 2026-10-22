@@ -11,6 +11,43 @@ internal static class PickerProbe
     [DllImport("user32.dll",CharSet=CharSet.Unicode)] private static extern int GetClassName(nint window,StringBuilder text,int length);
     [DllImport("user32.dll")] private static extern bool IsWindowVisible(nint window);
     [DllImport("user32.dll")] private static extern bool PostMessage(nint window,uint message,nint wParam,nint lParam);
+    [DllImport("user32.dll")] private static extern nint GetDlgItem(nint window,int id);
+    [DllImport("user32.dll",CharSet=CharSet.Unicode)] private static extern nint SendMessage(nint window,uint message,nint wParam,string text);
+    private static async Task<nint> WaitForDialog(Func<uint> thread)
+    {
+        var watch=Stopwatch.StartNew();
+        while(watch.ElapsedMilliseconds<30000)
+        {
+            nint found=0;uint id=thread();
+            if(id!=0)EnumThreadWindows(id,(window,_)=>{var cls=new StringBuilder(64);GetClassName(window,cls,64);if(cls.ToString()=="#32770"&&IsWindowVisible(window)){found=window;return false;}return true;},0);
+            if(found!=0)return found;
+            await Task.Delay(50);
+        }
+        throw new Exception("Dialogo do aplicativo nao abriu.");
+    }
+    internal static async Task CompleteColour(Func<uint> thread,uint? rgb)
+    {
+        nint dialog=await WaitForDialog(thread);
+        if(rgb is {} value)
+        {
+            // Windows SDK ColorDlg.h: COLOR_RED/GREEN/BLUE.
+            for(int channel=0;channel<3;channel++)
+            {
+                nint edit=GetDlgItem(dialog,706+channel);
+                if(edit==0)throw new Exception("Campo RGB ausente no dialogo nativo.");
+                SendMessage(edit,0x000C,0,((value>>(16-channel*8))&255).ToString());
+            }
+            await Task.Delay(150);
+        }
+        PostMessage(dialog,0x0111,rgb is null?2:1,0);
+    }
+    internal static async Task CompleteImage(Func<uint> thread,string path)
+    {
+        nint dialog=await WaitForDialog(thread);
+        // CDM_SETCONTROLTEXT and edt1 from the Windows SDK common-dialog headers.
+        SendMessage(dialog,0x0468,0x0480,path);await Task.Delay(150);
+        PostMessage(dialog,0x0111,1,0);
+    }
     public static void Run(string directory)
     {
         Directory.CreateDirectory(directory);var results=new List<string>();
@@ -61,3 +98,4 @@ internal static class PickerProbe
         File.WriteAllText(Path.Combine(directory,"picker-results.json"),JsonSerializer.Serialize(results));
     }
 }
+

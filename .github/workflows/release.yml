@@ -67,17 +67,24 @@ jobs:
           $overlay = Get-Content "$output/overlay/overlay-results.json" -Raw
           Write-Output $overlay
           $ui = Start-Process dist/Standalone/CursorHub.exe -ArgumentList "--verify-ui `"$output/ui`"" -PassThru -RedirectStandardError "$output/ui-stderr.txt"
-          if (!$ui.WaitForExit(120000)) { $ui.Kill(); throw 'UI verification timed out' }
+          if (!$ui.WaitForExit(240000)) { $ui.Kill(); throw 'UI verification timed out' }
           $results = Get-Content "$output/ui/results.json" -Raw
           Write-Output $results
           $dark = Start-Process dist/Standalone/CursorHub.exe -ArgumentList "--verify-dark-ui `"$output/dark`"" -PassThru -RedirectStandardError "$output/dark-stderr.txt"
-          if (!$dark.WaitForExit(120000)) { $dark.Kill(); throw 'Dark UI verification timed out' }
+          if (!$dark.WaitForExit(240000)) { $dark.Kill(); throw 'Dark UI verification timed out' }
           $darkResults = Get-Content "$output/dark/results.json" -Raw
           Write-Output $darkResults
           if ($pickerResults -match 'FAIL' -or $pickerResults -notmatch 'thread MTA' -or $pickerResults -notmatch 'confirmacao RGB exata') { throw 'File picker verification failed' }
           if ($overlay -match 'FAIL' -or $overlay -notmatch 'PASS worker') { throw 'Overlay verification failed' }
           if ($results -match 'FAIL' -or $results -notmatch 'Maximizar/restaurar') { throw 'UI verification failed' }
           if ($darkResults -match 'FAIL' -or $darkResults -notmatch 'Maximizar/restaurar') { throw 'Dark UI verification failed' }
+          foreach ($mode in @('ui','dark')) {
+            $restart = Start-Process dist/Standalone/CursorHub.exe -ArgumentList "--verify-restart-ui `"$output/$mode`"" -PassThru
+            if (!$restart.WaitForExit(60000)) { $restart.Kill(); throw 'Restart verification timed out' }
+            $restored = Get-Content "$output/$mode/restart-results.json" -Raw
+            Write-Output $restored
+            if ($restored -match 'FAIL' -or $restored -notmatch 'PASS processo reiniciado') { throw 'Restart verification failed' }
+          }
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -104,3 +111,4 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Release publication failed' }
 
 # Validates standalone execution, independent trail size, complete presets and SVG sliders.
+

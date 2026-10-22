@@ -23,10 +23,11 @@ internal static class Program
             MessageBox(0, "Ja existe uma instancia do Cursor Hub aberta. Feche a versao anterior (inclusive se estiver minimizada) e abra esta versao novamente.", "Cursor Hub - versao ja aberta", 0x40);
             return;
         }
-        bool verification = args.Length == 2 && (args[0] == "--verify" || args[0] == "--verify-ui" || args[0] == "--verify-dark-ui");
+        bool verification = args.Length == 2 && (args[0] == "--verify" || args[0] == "--verify-ui" || args[0] == "--verify-dark-ui" || args[0] == "--verify-restart-ui");
         using var host = Host.GetSuitableDesktopHost("CursorHub-Prototype", new HostOptions { PortableInstallation = verification });
         using var game = new CursorHubGame();
-        if (verification) { game.VerificationDirectory = Path.GetFullPath(args[1]); game.VerifyUiOnly = args[0] != "--verify"; game.ForceDarkVerification = args[0] == "--verify-dark-ui"; }
+        if (verification) { game.VerificationDirectory = Path.GetFullPath(args[1]); game.VerifyUiOnly = args[0] != "--verify"; game.ForceDarkVerification = args[0] == "--verify-dark-ui"; game.VerifyRestart=args[0]=="--verify-restart-ui"; }
         host.Run(game);
     }
 }
+

@@ -79,6 +79,17 @@ public partial class CursorHubGame
             if(presetEditor.Alpha!=0||hotspotDialog.Alpha!=0||CurrentSettings()!=baseline||presets.Items.Count!=count)throw new Exception("Importacao atrasada reabriu ou alterou editor cancelado.");
             OpenPresetEditor(null);draftNameBox!.Text="";CommitPresetEditor();
             if(presets.Items.Count!=count||presetEditor.Alpha==0)throw new Exception("Nome invalido foi salvo ou fechou editor.");ClosePresetEditor();
+            OpenPresetEditor(null);draftNameBox!.Text="Retry after locked file";
+            using(var locked=File.Open(Path.Combine(VerificationDirectory!,"presets.json"),FileMode.Open,FileAccess.Read,FileShare.Read))
+            {
+                SaveSettings();
+                if(presets.Items.Count!=count || presetEditor.Alpha==0 || string.IsNullOrWhiteSpace(presetError?.Text.ToString()))
+                    throw new Exception("Falha de gravacao perdeu o rascunho ou ficou invisivel.");
+            }
+            SaveSettings();
+            if(presets.Items.Count!=count+1 || presetEditor.Alpha!=0)throw new Exception("Salvar novamente apos falha nao funcionou.");
+            presets.Remove(demonstratedPreset!.Value);demonstratedPreset=null;ApplyWorkspaceSettings(baseline);RefreshPresets();
+            results.Add("PASS falha de gravacao preserva rascunho, mostra erro e permite salvar novamente");
             string invalid=Path.Combine(VerificationDirectory!,"invalid.png");File.WriteAllText(invalid,"not a PNG");
             bool rejected=false;try{RasterAsset.Import(invalid);}catch(InvalidOperationException){rejected=true;}
             if(!rejected)throw new Exception("PNG invalido nao foi recusado.");
@@ -107,7 +118,9 @@ public partial class CursorHubGame
         try
         {
             await Task.Delay(2000);
+            if(VerifyRestart){await VerifyRestartedSession(results);return;}
             await VerifyNativeInput(results);
+            await VerifyPresetSaving(results);
             await Capture("00-empty-collection");
             await OnGameThread(() =>
             {
@@ -195,6 +208,7 @@ public partial class CursorHubGame
             await Capture("06-unmaximized");
             await OnGameThread(() => { CheckCursorPixels(); verifyPreviewPointer = false; }); results.Add("Maximizar/restaurar executados");
             await VerifyErrorCases(results);
+            await OnGameThread(WriteRestartCheckpoint);
             if (VerifyUiOnly) return;
             await OnGameThread(TogglePlay);
             await Task.Delay(1700);
@@ -225,9 +239,10 @@ public partial class CursorHubGame
         catch (Exception e) { results.Add("FAIL " + e); }
         finally
         {
-            await File.WriteAllTextAsync(Path.Combine(VerificationDirectory!, "results.json"), JsonSerializer.Serialize(results));
+            await File.WriteAllTextAsync(Path.Combine(VerificationDirectory!, VerifyRestart?"restart-results.json":"results.json"), JsonSerializer.Serialize(results));
             await OnGameThread(() => Exit());
         }
     }
 }
+
 

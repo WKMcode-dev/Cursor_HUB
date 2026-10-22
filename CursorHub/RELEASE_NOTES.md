@@ -1,11 +1,11 @@
-Cursor Hub 0.10.0 — galeria limpa, seletor de cores e verificacao ponta a ponta
+Cursor Hub 0.10.1 - salvamento de presets e miniaturas
 
-- Galeria mostra somente presets existentes e um card + NOVO; sem quadrados vazios.
-- Seletor nativo RGB alem da paleta padrao, com cores independentes salvas no cursor e no rastro.
-- Controles de cor ocultos para imagens PNG/SVG, nas abas principais e no editor de presets.
-- Setas SVG centralizadas nos botoes de paginacao.
-- Correcao de importacoes atrasadas que podiam reabrir um editor cancelado; fallback para imagens ausentes/corrompidas.
-- Testes Windows com cliques e digitacao reais: navegacao, sliders, criar/editar/usar/excluir preset, paginacao e Play/Stop.
-- Testes de abertura, cancelamento e confirmacao do seletor RGB, persistencia, nomes invalidos, arquivos corrompidos e troca de tema.
+- O botao lateral salva o preset que esta aberto no editor. Sem selecao, abre a criacao de um novo preset.
+- Miniaturas do preset selecionado acompanham cores e imagens atuais ao voltar para a galeria.
+- Salvar um novo preset retorna a galeria e preserva os ajustes para a proxima abertura.
+- Erros de gravacao aparecem no editor, preservam o rascunho e permitem tentar novamente.
+- Testes integrados incluem seletores RGB reais, importacao pelo gerenciador, imagens/hotspot, ambos os caminhos de salvar, falha de gravacao e reabertura em um novo processo.
+- Verificacoes existentes de temas, estados Play/Stop, overlay, paginacao, escala e rastros continuam obrigatorias antes de publicar.
 
-Executavel unico para Windows x64. Feche a versao anterior antes de abrir. Presets existentes sao mantidos.
+Executavel unico Windows x64. Feche a versao anterior antes de abrir. Presets existentes sao mantidos.
+

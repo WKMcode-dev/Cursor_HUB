@@ -18,7 +18,7 @@ public partial class CursorHubGame
     private static Color4 Muted => darkTheme ? new Color4(162, 177, 198, 255) : new Color4(100, 105, 117, 255);
     private readonly Container[] sections = new Container[5];
     private readonly HubButton[] navigation = new HubButton[5];
-    private HubButton playButton = null!, economyButton = null!;
+    private HubButton playButton = null!, economyButton = null!, saveButton = null!;
     private BindableInt rateBinding = new(60) { MinValue = 30, MaxValue = 360 };
     private Container previewCard = null!;
     private Sprite previewPlaceholder = null!;
@@ -62,7 +62,7 @@ public partial class CursorHubGame
             root.Add(sections[i] = new Container { Position = new Vector2(264, 100), Size = new Vector2(235, 345) });
         }
         root.Add(Label("DESKTOP PERSONALIZATION", 27, 367, 9, Muted));
-        root.Add(Label("osu!framework / v0.10.0", 27, 384, 11));
+        root.Add(Label("osu!framework / v0.10.1", 27, 384, 11));
         root.Add(Label("CTRL + SHIFT + X  /  PARAR", 27, 410, 9, Muted));
 
         sections[1].Add(Label("APARENCIA", 0, 0, 11, Muted));
@@ -112,7 +112,7 @@ public partial class CursorHubGame
         root.Add(new Box { Position = new Vector2(780, 100), Size = new Vector2(1, 318), Colour = new Color4(207, 211, 219, 255) });
         previewCard.Add(previewPlaceholder = new Sprite { Texture = LoadSkin("cursor.png"), Anchor = Anchor.Centre, Origin = Anchor.Centre, Size = new Vector2(23, 29), Colour = Accent });
         root.Add(status = Label("", 264, 449, 8, Muted));
-        root.Add(MakeButton("SALVAR AJUSTES", 26, 442, 190, SaveSettings));
+        root.Add(saveButton = MakeButton("SALVAR PRESET", 26, 442, 190, SaveSettings));
         playButton = MakeButton("PLAY", 950, 444, 136, TogglePlay);
         playButton.Height = 42;
         playButton.Skin = LoadSkin("play.png");
@@ -140,6 +140,7 @@ public partial class CursorHubGame
             navigation[i].BackgroundColour = i == index ? new Color4(30, 34, 43, 255) : new Color4(247, 248, 250, 255);
             navigation[i].TextColour = i == index ? new Color4(245, 247, 251, 255) : Muted;
         }
+        if(index==0 && presetRows is not null)RefreshPresets();
     }
 
     private static SpriteText Label(string text, float x, float y, float size = 14, Color4? colour = null) => new()
@@ -167,13 +168,22 @@ public partial class CursorHubGame
     private void UpdateEconomyLabel() => economyButton.Text = $"Economia: {(economy ? "ligada" : "desligada")}";
     private void SaveSettings()
     {
+        if (hotspotDialog.Alpha > 0)
+        {
+            notice = "Aplique ou cancele a imagem antes de salvar."; nextStatus = 0; return;
+        }
+        if (presetEditor.Alpha > 0) { CommitPresetEditor(); return; }
+        var selected=presets.Items.FirstOrDefault(p=>p.Id==demonstratedPreset);
+        if (selected is null) { OpenPresetEditor(null); return; }
         try {
-            var settings=CurrentSettings();settings.Save();
-            var selected=presets.Items.FirstOrDefault(p=>p.Id==demonstratedPreset);
-            if(selected is not null){presets.Put(selected with {Settings=settings});RefreshPresets();}
-            notice = selected is null?"Configuracoes salvas":"Preset e miniatura atualizados";
+            var settings=CurrentSettings();
+            presets.Put(selected with {Settings=settings});RefreshPresets();
+            SaveWorkspace(settings);
+            notice = "Preset e miniatura salvos";
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException) { notice = "Nao foi possivel salvar: "+e.Message; }
         nextStatus = 0;
     }
+    private void SaveWorkspace(HubSettings settings) => settings.Save(VerificationDirectory is null ? null : Path.Combine(VerificationDirectory,"settings.json"));
 }
+

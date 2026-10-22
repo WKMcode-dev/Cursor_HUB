@@ -54,7 +54,7 @@ public partial class CursorHubGame
     }
     private void SavePreferences()
     {
-        try{preferences.Save();notice="Preferencias salvas";}catch(Exception e){notice=e.Message;}nextStatus=0;
+        try{if(VerificationDirectory is null)preferences.Save();notice="Preferencias salvas";}catch(Exception e){notice=e.Message;}nextStatus=0;
     }
     private bool importingImage;
     private void ImportImage(bool isTrail)=>ChooseImage((path,art)=>
@@ -69,7 +69,9 @@ public partial class CursorHubGame
         if(importingImage)return;importingImage=true;
         try
         {
-            string? source=await AssetPicker.PickAsync(CursorInput.FindWindow(null,windowTitle));
+            verificationImageThread=0;
+            string? source=await AssetPicker.PickAsync(CursorInput.FindWindow(null,windowTitle),
+                VerificationDirectory is null ? null : id=>Volatile.Write(ref verificationImageThread,id));
             if(source is null)return;
             string path=await Task.Run(()=>RasterAsset.Import(source));
             var art=await Task.Run(()=>RasterAsset.Load(path));
@@ -114,3 +116,4 @@ public partial class CursorHubGame
         hotspotDialog.Add(MakeButton("CANCELAR",445,302,155,()=>hotspotDialog.Hide()));hotspotDialog.Show();
     }
 }
+

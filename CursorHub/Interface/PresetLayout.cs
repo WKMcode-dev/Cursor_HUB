@@ -58,7 +58,8 @@ public partial class CursorHubGame
                 button.Skin = LoadSkin("preset-card.png");
                 button.SkinColour = preset.Id == demonstratedPreset ? new Color4(221, 241, 243, 255) : Color4.White;
                 card.Add(button);
-                var cfg=preset.Settings;
+                // The selected card previews current edits; other cards remain saved snapshots.
+                var cfg=preset.Id==demonstratedPreset?CurrentSettings():preset.Settings;
                 var colour=ResolveColour(cfg.Colour,cfg.CursorRgb);
                 float diameter=8+(Math.Clamp(cfg.Size,8,48)-8)*.45f;
                 float trailDiameter=8+(cfg.ResolvedTrailSize-8)*.45f;
@@ -66,9 +67,9 @@ public partial class CursorHubGame
                 for(int t=0;t<4;t++)
                 {
                     float amount=(t+1)/5f;
-                    card.Add(new Sprite {Texture=UserImage(cfg.TrailImage),Position=new Vector2(14+t*7,36-t*4),Origin=Anchor.Centre,Size=new Vector2(trailDiameter*(.25f+.65f*amount)),Colour=cfg.TrailImage is null?trailColour:Color4.White,Alpha=amount*.65f});
+                    card.Add(new Sprite {Name="trail-thumbnail",Texture=UserImage(cfg.TrailImage),Position=new Vector2(14+t*7,36-t*4),Origin=Anchor.Centre,Size=new Vector2(trailDiameter*(.25f+.65f*amount)),Colour=cfg.TrailImage is null?trailColour:Color4.White,Alpha=amount*.65f});
                 }
-                card.Add(new Sprite {Texture=UserImage(cfg.CursorImage),Position=new Vector2(43,19),Origin=Anchor.Centre,Size=new Vector2(diameter),Colour=cfg.CursorImage is null?colour:Color4.White});
+                card.Add(new Sprite {Name="cursor-thumbnail",Texture=UserImage(cfg.CursorImage),Position=new Vector2(43,19),Origin=Anchor.Centre,Size=new Vector2(diameter),Colour=cfg.CursorImage is null?colour:Color4.White});
                 var name = preset.Name.Length > 9 ? preset.Name[..8] + ".." : preset.Name;
                 card.Add(Label(name, 6, 57, 8));
                 int selectedCell = cell;
@@ -145,6 +146,7 @@ public partial class CursorHubGame
     private Guid? editingPresetId;
     private string draftName="";
     private HubTextBox? draftNameBox;
+    private SpriteText? presetError;
     private int editorTab;
     private long presetEditRevision;
     private void ClosePresetEditor(){presetEditRevision++;presetEditor.Hide();if(hotspotDialog is not null)hotspotDialog.Hide();}
@@ -206,6 +208,7 @@ public partial class CursorHubGame
         }
         presetEditor.Add(MakeButton("SALVAR PRESET",16,318,230,CommitPresetEditor));
         presetEditor.Add(MakeButton("CANCELAR",266,318,230,ClosePresetEditor));
+        presetEditor.Add(presetError=Label("",16,356,10,new Color4(220,85,95,255)));
     }
     private void CommitPresetEditor()
     {
@@ -213,10 +216,13 @@ public partial class CursorHubGame
         {
             draftName=draftNameBox?.Text??draftName;
             var preset=new CursorPreset(editingPresetId??Guid.NewGuid(),draftName,presetDraft);
-            presets.Put(preset);demonstratedPreset=preset.Id;ApplyWorkspaceSettings(presetDraft);
+            presets.Put(preset);editingPresetId=preset.Id;demonstratedPreset=preset.Id;ApplyWorkspaceSettings(presetDraft);
             presetPage=Math.Max(0,presets.Items.FindIndex(p=>p.Id==preset.Id)/PresetsPerPage);
-            ClosePresetEditor();RefreshPresets();notice="Preset e miniatura atualizados";nextStatus=0;
+            ClosePresetEditor();SelectSection(0);RefreshPresets();notice="Preset e miniatura salvos";nextStatus=0;
+            try { SaveWorkspace(CurrentSettings()); }
+            catch(Exception e) { notice="Preset salvo; falha ao salvar ajustes: "+e.Message; }
         }
-        catch(Exception e){notice=e.Message;nextStatus=0;}
+        catch(Exception e){notice="Nao foi possivel salvar: "+e.Message;if(presetError is not null)presetError.Text=e.Message;nextStatus=0;}
     }
 }
+
