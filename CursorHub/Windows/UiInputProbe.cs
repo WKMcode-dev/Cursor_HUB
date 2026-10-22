@@ -28,9 +28,13 @@ internal static class UiInputProbe
     }
     public static void Press()=>mouse_event(2,0,0,0,0);
     public static void Release()=>mouse_event(4,0,0,0,0);
+    public static void Key(ushort key,bool up)
+    {
+        if(SendInput(1,new[]{new Input{Type=1,Key=key,Flags=up?2u:0u}},Marshal.SizeOf<Input>())!=1)throw new Win32Exception();
+    }
     public static void ReplaceText(string text)
     {
-        var input=new List<Input>{new(){Type=1,Key=0x11},new(){Type=1,Key=0x41},new(){Type=1,Key=0x41,Flags=2},new(){Type=1,Key=0x11,Flags=2}};
+        var input=new List<Input>();
         foreach(char c in text){input.Add(new Input{Type=1,Scan=c,Flags=4});input.Add(new Input{Type=1,Scan=c,Flags=6});}
         if(SendInput((uint)input.Count,input.ToArray(),Marshal.SizeOf<Input>())!=input.Count)throw new Win32Exception();
     }

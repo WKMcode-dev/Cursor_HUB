@@ -47,8 +47,12 @@ public partial class CursorHubGame
         await Click(327,157,()=>presetMenu.Alpha>0,"menu do preset");
         await Click(350,136,()=>presetEditor.Alpha>0,"editar pelo menu");
         await ClickAt(520,150);await Task.Delay(150);
+        await OnGameThread(()=>UiInputProbe.Key(0x11,false));await Task.Delay(100);
+        await OnGameThread(()=>UiInputProbe.Key(0x41,false));await Task.Delay(100);
+        await OnGameThread(()=>UiInputProbe.Key(0x41,true));await Task.Delay(100);
+        await OnGameThread(()=>UiInputProbe.Key(0x11,true));await Task.Delay(100);
         await OnGameThread(()=>UiInputProbe.ReplaceText("E2E edited"));await Task.Delay(250);
-        await OnGameThread(()=>{if(draftNameBox!.Text!="E2E edited")throw new Exception("Digitacao real nao chegou ao nome do preset.");});
+        await OnGameThread(()=>{if(draftNameBox!.Text!="E2E edited")throw new Exception("Digitacao real nao chegou ao nome do preset: "+draftNameBox.Text);});
         await Click(395,419,()=>presetEditor.Alpha==0&&presets.Items[0].Name=="E2E edited","salvar edicao e nome digitado");
         await Click(327,157,()=>presetMenu.Alpha>0,"reabrir menu");
         await Click(350,160,()=>presetMenu.Alpha==0&&demonstratedPreset==presets.Items[0].Id,"usar preset");
