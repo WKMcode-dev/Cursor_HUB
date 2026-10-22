@@ -37,6 +37,8 @@ jobs:
           Invoke-WebRequest "$base/OFL.txt" -OutFile CursorHub/Assets/Fonts/OFL.txt
           python CursorHub/Tools/Build-Font.py CursorHub/Assets/Fonts
           if ($LASTEXITCODE -ne 0) { throw 'Font generation failed' }
+          New-Item -ItemType Directory -Force verification/fonts | Out-Null
+          Copy-Item CursorHub/Assets/Fonts/*.fnt,CursorHub/Assets/Fonts/*.png,CursorHub/Assets/Fonts/OFL.txt verification/fonts/
       - name: Run core checks
         run: |
           dotnet run --project CursorHub/Checks/Checks.csproj -c Release

@@ -65,7 +65,18 @@ internal static class OverlayProbe
             results.Add($"Worker do rastro acima de outra janela: #{trail & 255:X2}{(trail >> 8) & 255:X2}{(trail >> 16) & 255:X2}");
             if ((trail & 255) < 200 || ((trail >> 8) & 255) > 230 || ((trail >> 16) & 255) < 80)
                 throw new Exception("Rastro nao foi encontrado na composicao final.");
-            effects.Stop();
+            for(int i=0;i<20;i++){effects.Stop();effects.Play(new EffectOptions(36,600,60,255,0,180,false));}
+            timeout.Restart();
+            while(effects.Playback.Snapshot.Phase!=Core.PlaybackPhase.Playing && timeout.ElapsedMilliseconds<2000){LayeredSurface.Pump();Thread.Sleep(5);}
+            if(effects.Playback.Snapshot.Phase!=Core.PlaybackPhase.Playing)throw new Exception("Play apos cliques rapidos nao confirmou.");
+            effects.Stop();timeout.Restart();
+            while(effects.Playback.Snapshot.Phase!=Core.PlaybackPhase.Stopped && timeout.ElapsedMilliseconds<2000){LayeredSurface.Pump();Thread.Sleep(5);}
+            if(effects.Playback.Snapshot.Phase!=Core.PlaybackPhase.Stopped || effects.Active)throw new Exception("Stop final nao confirmou.");
+            results.Add("PASS 20 ciclos rapidos de Play/Stop no compositor real");
+            using var grown=new LayeredSurface();grown.EnsureCapacity(1400,1100);grown.Pixels.Clear();
+            LayeredSurface.Circle(grown.Pixels,grown.Stride,1400,1100,1380,1080,8,255,0,180,1);
+            if((grown.Pixels[1080*grown.Stride+1380]>>24)==0)throw new Exception("Ponta do rastro cortada apos 1024 px.");
+            results.Add("PASS superficie expandida para rastro maior que 1024 px");
             results.Add("PASS worker real do rastro acima de outra janela");
         }
         catch (Exception error) { results.Add("FAIL " + error); }
