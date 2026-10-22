@@ -236,7 +236,11 @@ public partial class CursorHubGame
             if (desktop.Active) throw new Exception("Stop nao concluiu");
             results.Add("Stop concluiu; recursos liberados");
         }
-        catch (Exception e) { results.Add("FAIL " + e); }
+        catch (Exception e)
+        {
+            results.Add("FAIL " + e);
+            try{using var shot=await Host.TakeScreenshotAsync();await shot.SaveAsPngAsync(Path.Combine(VerificationDirectory!,"failure.png"));}catch{}
+        }
         finally
         {
             await File.WriteAllTextAsync(Path.Combine(VerificationDirectory!, VerifyRestart?"restart-results.json":"results.json"), JsonSerializer.Serialize(results));

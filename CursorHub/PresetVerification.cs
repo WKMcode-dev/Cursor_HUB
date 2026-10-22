@@ -20,7 +20,7 @@ public partial class CursorHubGame
     private async Task VerifyEventually(Func<bool> condition,string label)
     {
         for(int i=0;i<100;i++){bool done=false;await OnGameThread(()=>done=condition());if(done)return;await Task.Delay(100);}
-        throw new Exception(label);
+        throw new Exception(label+" Estado: "+notice+"; importando="+importingImage+"; hotspot="+hotspotDialog.Alpha);
     }
     private void CheckThumbnail(uint cursorColour,uint trailColour)
     {
