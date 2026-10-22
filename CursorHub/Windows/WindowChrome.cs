@@ -60,7 +60,7 @@ internal sealed class WindowChrome : IDisposable
     {
         if (handle == 0) throw new InvalidOperationException("Janela nativa ainda indisponivel.");
         this.handle = handle;
-        mask = new ChromeMask(Path.Combine(AppContext.BaseDirectory, "Assets"), dark);
+        mask = new ChromeMask(AssetPaths.Directory, dark);
         SetWindowLong(handle, -16, GetWindowLong(handle, -16) & ~0x00CF0000);
         RemoveSystemBorder();
         SetWindowPos(handle, 0, 0, 0, 0, 0, 0x0037); // FRAMECHANGED, no move/size/activate/z-order
@@ -68,7 +68,7 @@ internal sealed class WindowChrome : IDisposable
 
     public void SetTheme(bool dark)
     {
-        mask = new ChromeMask(Path.Combine(AppContext.BaseDirectory, "Assets"), dark);
+        mask = new ChromeMask(AssetPaths.Directory, dark);
         width = height = 0;
     }
 

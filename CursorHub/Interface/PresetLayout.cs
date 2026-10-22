@@ -12,7 +12,7 @@ namespace CursorHub;
 
 public partial class CursorHubGame
 {
-    private readonly PresetStore presets = new();
+    private PresetStore presets = new();
     private Container presetRows = null!, presetMenu = null!, presetEditor = null!;
     private int presetPage;
     private Guid? menuFor;
@@ -32,7 +32,7 @@ public partial class CursorHubGame
         sections[0].Add(previous); sections[0].Add(next);
         sections[0].Add(presetCounter = Label("", 74, 329, 9, Muted));
         root.Add(presetMenu = new Container { Size = new Vector2(23.0625f, 72), Alpha = 0, Depth = -40 });
-        root.Add(presetEditor = new Container { Position = new Vector2(420, 98), Size = new Vector2(334, 320), Alpha = 0, Depth = -50 });
+        root.Add(presetEditor = new Container { Position = new Vector2(264, 84), Size = new Vector2(512, 360), Alpha = 0, Depth = -50 });
         RefreshPresets();
     }
 
@@ -60,10 +60,12 @@ public partial class CursorHubGame
                 var colour=palette[Math.Clamp(cfg.Colour,0,palette.Length-1)];
                 string Existing(string? path)=>path is not null && File.Exists(path)?path:"particle.png";
                 float diameter=8+(Math.Clamp(cfg.Size,8,48)-8)*.45f;
+                float trailDiameter=8+(cfg.ResolvedTrailSize-8)*.45f;
+                var trailColour=palette[cfg.ResolvedTrailColour];
                 for(int t=0;t<4;t++)
                 {
                     float amount=(t+1)/5f;
-                    card.Add(new Sprite {Texture=LoadSkin(Existing(cfg.TrailImage)),Position=new Vector2(14+t*7,36-t*4),Origin=Anchor.Centre,Size=new Vector2(diameter*(.25f+.65f*amount)),Colour=cfg.TrailImage is null?colour:Color4.White,Alpha=amount*.65f});
+                    card.Add(new Sprite {Texture=LoadSkin(Existing(cfg.TrailImage)),Position=new Vector2(14+t*7,36-t*4),Origin=Anchor.Centre,Size=new Vector2(trailDiameter*(.25f+.65f*amount)),Colour=cfg.TrailImage is null?trailColour:Color4.White,Alpha=amount*.65f});
                 }
                 card.Add(new Sprite {Texture=LoadSkin(Existing(cfg.CursorImage)),Position=new Vector2(43,19),Origin=Anchor.Centre,Size=new Vector2(diameter),Colour=cfg.CursorImage is null?colour:Color4.White});
                 var name = preset.Name.Length > 9 ? preset.Name[..8] + ".." : preset.Name;
@@ -76,19 +78,15 @@ public partial class CursorHubGame
                 card.Add(menu);
                 presetRows.Add(card);
             }
-            else if (cell == page.Length && presets.Items.Count < 128)
-            {
-                var add = MakeButton("+", x, y, 72, () => OpenPresetEditor(null));
-                add.Height = 72;
-                presetRows.Add(add);
-                presetRows.Add(Label("NOVO", x + 23, y + 57, 8, Muted));
-            }
             else
             {
-                // Empty slots are static geometry, never fictitious saved presets.
-                var empty = new Container { Position = new Vector2(x, y), Size = new Vector2(72, 72), Masking = true, CornerRadius = 4, BorderThickness = 1, BorderColour = new Color4(228, 229, 232, 255) };
-                empty.Add(new Box { RelativeSizeAxes = Axes.Both, Colour = darkTheme?new Color4(37,43,55,255):new Color4(244, 245, 248, 255) });
-                empty.Add(Label("+", 31, 21, 13, new Color4(196, 201, 210, 255)));
+                var empty=new Container {Position=new Vector2(x,y),Size=new Vector2(72)};
+                var add=MakeButton("",0,0,72,()=>OpenPresetEditor(null));add.Height=72;add.Skin=LoadSkin("preset-card.png");
+                add.SkinColour=cell==page.Length?Color4.White:new Color4(220,228,236,210);empty.Add(add);
+                var colour=Muted;
+                empty.Add(new Box {Anchor=Anchor.Centre,Origin=Anchor.Centre,Size=new Vector2(12,1.5f),Colour=colour});
+                empty.Add(new Box {Anchor=Anchor.Centre,Origin=Anchor.Centre,Size=new Vector2(1.5f,12),Colour=colour});
+                if(cell==page.Length && presets.Items.Count<128)empty.Add(Label("NOVO",23,57,8,Muted));
                 presetRows.Add(empty);
             }
         }
@@ -122,58 +120,85 @@ public partial class CursorHubGame
         presetMenu.Alpha = 1;
     }
 
-    private HubSettings CurrentSettings() => new(size, lifetime, selectedRate, colourIndex, economy, cursorImage, trailImage, hotX, hotY);
+    private HubSettings CurrentSettings() => new(size, lifetime, selectedRate, colourIndex, economy, cursorImage, trailImage, hotX, hotY, trailSize, trailColourIndex);
 
     private void Demonstrate(CursorPreset preset)
     {
         demonstratedPreset = preset.Id;
-        var s = preset.Settings;
-        cursorImage=s.CursorImage;trailImage=s.TrailImage;hotX=Math.Clamp(s.HotX,0,1);hotY=Math.Clamp(s.HotY,0,1);
-        try{cursorArt=cursorImage is null?null:RasterAsset.Load(cursorImage);trailArt=trailImage is null?null:RasterAsset.Load(trailImage);}catch{cursorImage=trailImage=null;cursorArt=trailArt=null;}
-        sizeBinding.Value = Math.Clamp(s.Size, 8, 48);
-        lifetimeBinding.Value = Math.Clamp(s.Lifetime, 60, 600);
-        colourIndex = Math.Clamp(s.Colour, 0, palette.Length - 1);
-        selectedRate = Math.Clamp(s.Rate, 30, 360);
-        rateBinding.Value = selectedRate;
-        economy = s.Economy; UpdateEconomyLabel();
-        trail.Clear(); ApplyRate();
-        notice = "Demonstrando: " + preset.Name;
-        nextStatus = 0;
-        // The running desktop preset is unchanged until the next Play.
+        ApplyWorkspaceSettings(preset.Settings);
+        notice="Demonstrando: "+preset.Name;nextStatus=0;
     }
 
+    private void ApplyWorkspaceSettings(HubSettings s)
+    {
+        cursorImage=s.CursorImage;trailImage=s.TrailImage;hotX=Math.Clamp(s.HotX,0,1);hotY=Math.Clamp(s.HotY,0,1);
+        try{cursorArt=cursorImage is null?null:RasterAsset.Load(cursorImage);}catch{cursorImage=null;cursorArt=null;}
+        try{trailArt=trailImage is null?null:RasterAsset.Load(trailImage);}catch{trailImage=null;trailArt=null;}
+        sizeBinding.Value=Math.Clamp(s.Size,8,48);trailSizeBinding.Value=s.ResolvedTrailSize;
+        lifetimeBinding.Value=Math.Clamp(s.Lifetime,60,600);colourIndex=Math.Clamp(s.Colour,0,3);trailColourIndex=s.ResolvedTrailColour;
+        rateBinding.Value=Math.Clamp(s.Rate,30,360);economy=s.Economy;UpdateEconomyLabel();trail.Clear();ApplyRate();
+    }
+
+    private HubSettings presetDraft=new();
+    private Guid? editingPresetId;
+    private string draftName="";
+    private HubTextBox? draftNameBox;
+    private int editorTab;
     private void OpenPresetEditor(CursorPreset? existing)
     {
-        presetMenu.Alpha = 0;
+        presetMenu.Hide();editingPresetId=existing?.Id;var original=existing?.Settings??CurrentSettings();presetDraft=original with{TrailSize=original.ResolvedTrailSize,TrailColour=original.ResolvedTrailColour};
+        draftName=existing?.Name??$"Preset {presets.Items.Count+1}";draftNameBox=null;editorTab=0;
+        RenderPresetEditor();presetEditor.Show();
+    }
+    private void RenderPresetEditor()
+    {
+        if(draftNameBox is not null)draftName=draftNameBox.Text;
         presetEditor.Clear();
-        var s = existing?.Settings ?? CurrentSettings();
-        int editSize = s.Size, editLifetime = s.Lifetime, editColour = Math.Clamp(s.Colour, 0, palette.Length - 1);
-        presetEditor.Add(new Box { RelativeSizeAxes = Axes.Both, Colour = darkTheme?new Color4(36,42,54,255):new Color4(238, 241, 246, 255) });
-        presetEditor.Add(Label(existing is null ? "NOVO PRESET" : "EDITAR PRESET", 16, 14, 14, Orange));
-        var name = new HubTextBox { Position = new Vector2(16, 42), Size = new Vector2(302, 32), Text = existing?.Name ?? $"Preset {presets.Items.Count + 1}", PlaceholderText = "Nome do preset" };
-        presetEditor.Add(name);
-        var options = new Container { Position = new Vector2(16, 88), Size = new Vector2(300, 185) };
-        AddSlider(options, "Tamanho", 0, Math.Clamp(editSize, 8, 48), 8, 48, value => editSize = value, "px");
-        AddSlider(options, "Duracao", 83, Math.Clamp(editLifetime, 60, 600), 60, 600, value => editLifetime = value, "ms");
-        for (int i = 0; i < palette.Length; i++)
+        presetEditor.Add(new Box {RelativeSizeAxes=Axes.Both,Colour=darkTheme?new Color4(36,42,54,255):new Color4(238,241,246,255)});
+        string[] tabs={"CURSOR","RASTRO","AJUSTES"};
+        for(int i=0;i<3;i++){int tab=i;var button=MakeButton(tabs[i],16+i*162,12,156,()=>{editorTab=tab;RenderPresetEditor();});button.Height=28;button.TextColour=i==editorTab?Orange:Muted;presetEditor.Add(button);}
+        presetEditor.Add(draftNameBox=new HubTextBox {Position=new Vector2(16,50),Size=new Vector2(480,32),Text=draftName,PlaceholderText="Nome do preset"});
+        var options=new Container {Position=new Vector2(16,94),Size=new Vector2(480,212)};presetEditor.Add(options);
+        if(editorTab<2)
         {
-            int selected = i;
-            var swatch = MakeButton("", 252, i * 38, 42, () => editColour = selected);
-            swatch.BackgroundColour = palette[i];
-            options.Add(swatch);
-        }
-        presetEditor.Add(options);
-        presetEditor.Add(MakeButton("SALVAR", 16, 276, 142, () =>
-        {
-            try
+            bool isTrail=editorTab==1;
+            AddSlider(options,isTrail?"Tamanho do rastro":"Tamanho do cursor",0,isTrail?presetDraft.ResolvedTrailSize:presetDraft.Size,8,48,v=>presetDraft=isTrail?presetDraft with{TrailSize=v}:presetDraft with{Size=v},"px");
+            for(int i=0;i<palette.Length;i++){int colour=i;var swatch=MakeButton("",260,i*39,44,()=>presetDraft=isTrail?presetDraft with{TrailColour=colour}:presetDraft with{Colour=colour});swatch.BackgroundColour=palette[i];swatch.Height=30;options.Add(swatch);}
+            options.Add(Label("COR",324,5,10,Muted));
+            options.Add(MakeButton("IMPORTAR PNG / SVG",0,96,230,()=>
             {
-                presets.Put(new CursorPreset(existing?.Id ?? Guid.NewGuid(), name.Text, s with { Size = editSize, Lifetime = editLifetime, Colour = editColour }));
-                presetPage = existing is null ? Math.Max(0, (presets.Items.Count - 1) / PresetsPerPage) : presetPage;
-                presetEditor.Alpha = 0; RefreshPresets(); notice = "Preset salvo"; nextStatus = 0;
-            }
-            catch (Exception e) { notice = e.Message; nextStatus = 0; }
-        }));
-        presetEditor.Add(MakeButton("CANCELAR", 176, 276, 142, () => presetEditor.Alpha = 0));
-        presetEditor.Alpha = 1;
+                draftName=draftNameBox.Text;
+                ChooseImage((path,_)=>
+                {
+                    presetDraft=isTrail?presetDraft with{TrailImage=path}:presetDraft with{CursorImage=path,HotX=.5f,HotY=.5f};
+                    OpenImageEditor(presetDraft,isTrail,result=>{presetDraft=result;RenderPresetEditor();});
+                });
+            }));
+            options.Add(MakeButton(isTrail?"EDITAR IMAGEM":"IMAGEM / HOTSPOT",0,138,230,()=>OpenImageEditor(presetDraft,isTrail,result=>{presetDraft=result;RenderPresetEditor();})));
+            options.Add(MakeButton("FORMATO CIRCULAR",0,180,230,()=>{presetDraft=isTrail?presetDraft with{TrailImage=null}:presetDraft with{CursorImage=null,HotX=.5f,HotY=.5f};RenderPresetEditor();}));
+            string? image=isTrail?presetDraft.TrailImage:presetDraft.CursorImage;
+            options.Add(new Sprite {Texture=LoadSkin(image is not null&&File.Exists(image)?image:"particle.png"),Position=new Vector2(330,43),Size=new Vector2(100),Colour=image is null?palette[isTrail?presetDraft.ResolvedTrailColour:Math.Clamp(presetDraft.Colour,0,3)]:Color4.White});
+        }
+        else
+        {
+            AddSlider(options,"Duracao do rastro",0,Math.Clamp(presetDraft.Lifetime,60,600),60,600,v=>presetDraft=presetDraft with{Lifetime=v},"ms");
+            AddSlider(options,"Limite de desenho",92,Math.Clamp(presetDraft.Rate,30,360),30,360,v=>presetDraft=presetDraft with{Rate=v},"Hz");
+            var economy=MakeButton("Economia: "+(presetDraft.Economy?"ligada":"desligada"),254,12,218,()=>{});
+            economy.Action=()=>{presetDraft=presetDraft with{Economy=!presetDraft.Economy};economy.Text="Economia: "+(presetDraft.Economy?"ligada":"desligada");};options.Add(economy);
+        }
+        presetEditor.Add(MakeButton("SALVAR PRESET",16,318,230,CommitPresetEditor));
+        presetEditor.Add(MakeButton("CANCELAR",266,318,230,()=>{presetEditor.Hide();hotspotDialog.Hide();}));
+    }
+    private void CommitPresetEditor()
+    {
+        try
+        {
+            draftName=draftNameBox?.Text??draftName;
+            var preset=new CursorPreset(editingPresetId??Guid.NewGuid(),draftName,presetDraft);
+            presets.Put(preset);demonstratedPreset=preset.Id;ApplyWorkspaceSettings(presetDraft);
+            presetPage=Math.Max(0,presets.Items.FindIndex(p=>p.Id==preset.Id)/PresetsPerPage);
+            presetEditor.Hide();hotspotDialog.Hide();RefreshPresets();notice="Preset e miniatura atualizados";nextStatus=0;
+        }
+        catch(Exception e){notice=e.Message;nextStatus=0;}
     }
 }

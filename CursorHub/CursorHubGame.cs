@@ -17,7 +17,7 @@ namespace CursorHub;
 
 public partial class CursorHubGame : Game
 {
-    private readonly TrailBuffer trail = new(512);
+    private readonly TrailBuffer trail = new(1024);
     private readonly MotionPoint[] previewMoves = new MotionPoint[64];
     private readonly Stopwatch clock = Stopwatch.StartNew();
     private readonly Sprite[] dots = new Sprite[1024];
@@ -37,7 +37,7 @@ public partial class CursorHubGame : Game
     private double lastMovement, nextStatus;
     private System.Numerics.Vector2? lastPosition;
     private int drawnDots;
-    private int selectedRate = 60, size = 18, lifetime = 180, colourIndex;
+    private int selectedRate = 60, size = 18, trailSize = 18, trailColourIndex, lifetime = 180, colourIndex;
     private readonly Color4[] palette = { new(44, 137, 157, 255), new(206, 93, 163, 255), new(124, 105, 183, 255), new(37, 43, 55, 255) };
     private Color4 Accent => palette[colourIndex];
 
@@ -55,12 +55,14 @@ public partial class CursorHubGame : Game
         config.SetValue(FrameworkSetting.WindowedSize, new System.Drawing.Size(1320, 600));
         Fonts.AddStore(new osu.Framework.IO.Stores.FontStore(Host.Renderer,new osu.Framework.IO.Stores.GlyphStore(
             new osu.Framework.IO.Stores.ResourceStore<byte[]>(new osu.Framework.IO.Stores.StorageBackedResourceStore(
-                new osu.Framework.Platform.NativeStorage(Path.Combine(AppContext.BaseDirectory,"Assets")))), "Fonts/KodeMono"), scaleAdjust:48));
+                new osu.Framework.Platform.NativeStorage(AssetPaths.Directory))), "Fonts/KodeMono"), scaleAdjust:48));
+        if(VerificationDirectory is not null)presets=new PresetStore(Path.Combine(VerificationDirectory,"presets.json"));
         var saved = HubSettings.Load();
         darkTheme=ForceDarkVerification || preferences.DarkTheme;HubButton.DarkTheme=darkTheme;HubButton.Animations=preferences.Animations;
         cursorImage=saved.CursorImage;trailImage=saved.TrailImage;hotX=Math.Clamp(saved.HotX,0,1);hotY=Math.Clamp(saved.HotY,0,1);
         try{cursorArt=cursorImage is null?null:RasterAsset.Load(cursorImage);trailArt=trailImage is null?null:RasterAsset.Load(trailImage);}catch{cursorImage=trailImage=null;cursorArt=trailArt=null;}
         size = saved.Size; lifetime = saved.Lifetime; selectedRate = saved.Rate;
+        trailSize=saved.ResolvedTrailSize;trailColourIndex=saved.ResolvedTrailColour;
         colourIndex = saved.Colour; economy = saved.Economy;
         Add(background = new Box { RelativeSizeAxes = Axes.Both, Colour = Color4.Black });
         Add(panel = BuildInterface());
@@ -102,7 +104,7 @@ public partial class CursorHubGame : Game
         {
             reportedDesktopError=null;reportedDesktopWarning=null;
             var c=Accent;
-            desktop.Play(new EffectOptions(size,lifetime,selectedRate,(byte)(c.R*255),(byte)(c.G*255),(byte)(c.B*255),true,cursorArt,trailArt,hotX,hotY,preferences.History,preferences.Particles));
+            desktop.Play(new EffectOptions(size,lifetime,selectedRate,(byte)(c.R*255),(byte)(c.G*255),(byte)(c.B*255),true,cursorArt,trailArt,hotX,hotY,preferences.History,preferences.Particles,trailSize,(byte)(palette[trailColourIndex].R*255),(byte)(palette[trailColourIndex].G*255),(byte)(palette[trailColourIndex].B*255)));
             notice="Ativando efeitos";
         }
         UpdatePlayLabel();
@@ -131,7 +133,7 @@ public partial class CursorHubGame : Game
         if (position is { } previewPoint)
         {
             float x = viewport.X(previewPoint.X), y = viewport.Y(previewPoint.Y);
-            float margin = size * (input?.PixelScale ?? 1) / (2 * viewport.Scale) + 2;
+            float margin = Math.Max(size,trailSize) * (input?.PixelScale ?? 1) / (2 * viewport.Scale) + 2;
             var bounds = previewCard;
             if (x < bounds.X + margin || x > bounds.X + bounds.Width - margin || y < bounds.Y + margin || y > bounds.Y + bounds.Height - margin || presetEditor.Alpha > 0 || presetMenu.Alpha > 0 || hotspotDialog.Alpha > 0) position = null;
         }
@@ -141,11 +143,11 @@ public partial class CursorHubGame : Game
         bool shouldIdle = now - lastMovement > lifetime + 250;
         if (idle != shouldIdle) { idle = shouldIdle; ApplyRate(); }
 
-        float spacing = Math.Max(1, size * (input?.PixelScale ?? 1) / 8f);
+        float spacing = Math.Max(1, trailSize * (input?.PixelScale ?? 1) / 8f);
         if (enabled && position.HasValue && !verifyPreviewPointer && input is not null && preferences.History)
         {
             int recovered = input.ReadHistory(now, previewMoves);
-            float margin = size * input.PixelScale / (2 * viewport.Scale) + 2;
+            float margin = Math.Max(size,trailSize) * input.PixelScale / (2 * viewport.Scale) + 2;
             for (int i = 0; i < recovered; i++)
             {
                 var sample = previewMoves[i];
@@ -164,9 +166,9 @@ public partial class CursorHubGame : Game
             var sample = trail[i + Math.Max(0,trail.Count-visibleDots)];
             float remaining = Math.Clamp(1 - (float)((now - sample.Born) / lifetime), 0, 1);
             dot.Position = new Vector2(sample.Position.X, sample.Position.Y);
-            dot.Size = new Vector2(size * (input?.PixelScale ?? 1) * (0.25f + remaining * 0.65f));
+            dot.Size = new Vector2(trailSize * (input?.PixelScale ?? 1) * (0.25f + remaining * 0.65f));
             dot.Texture=LoadSkin(trailImage ?? "particle.png");
-            dot.Colour = trailImage is null?Accent:Color4.White;
+            dot.Colour = trailImage is null?palette[trailColourIndex]:Color4.White;
             dot.Alpha = remaining * 0.65f * (1-Math.Clamp((visibleDots-preferences.Particles+24)/24f,0,1)*(1-Math.Min(1,(i+1)/24f)));
         }
         drawnDots = visibleDots;

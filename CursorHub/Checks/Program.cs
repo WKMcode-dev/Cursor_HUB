@@ -153,3 +153,12 @@ foreach(int speed in new[]{100,1000,5000})
     combinations++;
 }
 Console.WriteLine($"PASS matriz combinatoria: {combinations} cenarios (64 sequencias de estado, 135 trajetorias)");
+
+var legacy=System.Text.Json.JsonSerializer.Deserialize<CursorHub.Interface.HubSettings>("{\"Size\":36,\"Colour\":2}")!;
+Check(legacy.ResolvedTrailSize==36&&legacy.ResolvedTrailColour==2,"migracao visual de presets antigos");
+var migrated=legacy with{TrailSize=legacy.ResolvedTrailSize,TrailColour=legacy.ResolvedTrailColour};
+var resized=migrated with{Size=48,Colour=0};
+Check(resized.ResolvedTrailSize==36&&resized.ResolvedTrailColour==2,"cursor nao modifica dimensao ou cor do rastro migrado");
+var independent=new CursorHub.Interface.HubSettings(Size:48,TrailSize:8,TrailColour:1,Colour:2,HotX:.2f,HotY:.9f,CursorImage:"cursor.png",TrailImage:"trail.png");
+Check(System.Text.Json.JsonSerializer.Deserialize<CursorHub.Interface.HubSettings>(System.Text.Json.JsonSerializer.Serialize(independent))==independent,"persistencia completa dos campos independentes");
+Console.WriteLine("PASS migracao e independencia de cursor/rastro");

@@ -5,12 +5,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Version>0.8.2</Version>
+    <Version>0.9.0</Version>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Svg.Skia" Version="3.2.1" />
     <PackageReference Include="ppy.osu.Framework" Version="2026.1008.0" />
     <Compile Remove="Checks/**/*.cs" />
+    <EmbeddedResource Include="AssetBundle.zip" Condition="Exists('AssetBundle.zip')" LogicalName="CursorHub.AssetBundle.zip" />
     <Content Include="Assets/**/*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

@@ -49,13 +49,38 @@ public partial class CursorHubGame
             results.Add("Tema alternado ao vivo e ajustes preservados");
             await OnGameThread(()=>
             {
-                _ = RasterAsset.Import(Path.Combine(AppContext.BaseDirectory,"Assets","import-test.svg"));
-                cursorImage=RasterAsset.Import(Path.Combine(AppContext.BaseDirectory,"Assets","cursor.png"));
+                _ = RasterAsset.Import(Path.Combine(AssetPaths.Directory,"import-test.svg"));
+                cursorImage=RasterAsset.Import(Path.Combine(AssetPaths.Directory,"cursor.png"));
                 cursorImage=RasterAsset.Transform(cursorImage,45,true,false);cursorArt=RasterAsset.Load(cursorImage);hotX=.15f;hotY=.2f;SelectSection(1);OpenHotspot();
             });
             await Capture("01d-hotspot");
             await OnGameThread(()=> {hotspotDialog.Hide();cursorImage=null;cursorArt=null;hotX=hotY=.5f;});
             results.Add("Importacao SVG/PNG e editor de hotspot executados");
+            await OnGameThread(()=>
+            {
+                var icon=RasterAsset.Import(Path.Combine(AssetPaths.Directory,"import-test.svg"));
+                var tail=RasterAsset.Import(Path.Combine(AssetPaths.Directory,"particle.png"));
+                OpenPresetEditor(null);
+                presetDraft=CurrentSettings() with{Size=40,TrailSize=8,CursorImage=icon,TrailImage=tail,HotX=.12f,HotY=.83f,Lifetime=450,Rate=165,Colour=2,TrailColour=1};
+                draftNameBox!.Text="Custom Arrow";RenderPresetEditor();
+            });
+            await Capture("01f-preset-cursor");
+            await OnGameThread(()=>{editorTab=1;RenderPresetEditor();});
+            await Capture("01g-preset-trail");
+            await OnGameThread(()=>{editorTab=2;RenderPresetEditor();});
+            await Capture("01h-preset-options");
+            await OnGameThread(()=>
+            {
+                var expected=presetDraft;CommitPresetEditor();
+                var saved=new PresetStore(Path.Combine(VerificationDirectory!,"presets.json")).Items.First(p=>p.Id==demonstratedPreset);
+                if(saved.Settings!=expected)throw new Exception("Edicao completa perdeu campos ao salvar.");
+                sizeBinding.Value=48;if(trailSize!=8)throw new Exception("Cursor ainda alterou tamanho do rastro.");
+                trailSizeBinding.Value=24;if(size!=48)throw new Exception("Rastro ainda alterou tamanho do cursor.");
+                Demonstrate(saved);if(cursorImage!=expected.CursorImage||trailImage!=expected.TrailImage||trailSize!=8||size!=40)throw new Exception("Preset nao restaurou imagens e tamanhos.");
+                RefreshPresets();
+            });
+            await Capture("01i-custom-thumbnail");
+            results.Add("Edicao completa preserva imagens, hotspot, tamanhos e cores independentes; preset recarregado do disco");
             await OnGameThread(() => SelectSection(3));
             await Capture("01b-performance");
             await OnGameThread(() => { rateBinding.Value = 165; if (selectedRate != 165) throw new Exception("165Hz nao aplicado"); SelectSection(0); });

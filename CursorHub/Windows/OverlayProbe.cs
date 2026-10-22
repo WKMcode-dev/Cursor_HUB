@@ -56,7 +56,7 @@ internal static class OverlayProbe
             results.Add("PASS composicao final sobre janelas independentes");
             overlay.Hide();
             using var effects = new DesktopEffects(() => new LayeredSurface.Point(560, 420));
-            effects.Play(new EffectOptions(36, 600, 60, 255, 0, 180, false));
+            effects.Play(new EffectOptions(48, 600, 60, 255, 0, 180, false,TrailSize:8));
             var timeout = System.Diagnostics.Stopwatch.StartNew();
             while (effects.PresentedFrames == 0 && timeout.ElapsedMilliseconds < 2000) { LayeredSurface.Pump(); Thread.Sleep(5); }
             if (effects.PresentedFrames == 0) throw new Exception("Worker nao apresentou rastro: " + effects.Details);
@@ -65,7 +65,10 @@ internal static class OverlayProbe
             results.Add($"Worker do rastro acima de outra janela: #{trail & 255:X2}{(trail >> 8) & 255:X2}{(trail >> 16) & 255:X2}");
             if ((trail & 255) < 200 || ((trail >> 8) & 255) > 230 || ((trail >> 16) & 255) < 80)
                 throw new Exception("Rastro nao foi encontrado na composicao final.");
-            for(int i=0;i<20;i++){effects.Stop();effects.Play(new EffectOptions(36,600,60,255,0,180,false));}
+            screen=GetDC(0);uint outside=GetPixel(screen,572,420);ReleaseDC(0,screen);
+            if((outside&0xFFFFFF)!=0xFFFFFF)throw new Exception("Cursor de 48px alterou rastro de 8px.");
+            results.Add("PASS cursor de 48px com rastro independente de 8px na composicao nativa");
+            for(int i=0;i<20;i++){effects.Stop();effects.Play(new EffectOptions(48,600,60,255,0,180,false,TrailSize:8));}
             timeout.Restart();
             while(effects.Playback.Snapshot.Phase!=Core.PlaybackPhase.Playing && timeout.ElapsedMilliseconds<2000){LayeredSurface.Pump();Thread.Sleep(5);}
             if(effects.Playback.Snapshot.Phase!=Core.PlaybackPhase.Playing)throw new Exception("Play apos cliques rapidos nao confirmou.");

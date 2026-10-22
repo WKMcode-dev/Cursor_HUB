@@ -20,8 +20,9 @@ public partial class CursorHubGame
         sections[1].Add(MakeButton("IMPORTAR CURSOR PNG / SVG",0,224,235,()=>ImportImage(false)));
         sections[1].Add(MakeButton("EDITAR HOTSPOT",0,264,235,OpenHotspot));
         sections[1].Add(MakeButton("CURSOR CIRCULAR",0,304,235,()=>{cursorImage=null;cursorArt=null;hotX=hotY=.5f;notice="Cursor circular selecionado";}));
-        sections[2].Add(MakeButton("IMPORTAR RASTRO PNG / SVG",0,220,235,()=>ImportImage(true)));
-        sections[2].Add(MakeButton("RASTRO CIRCULAR",0,260,235,()=>{trailImage=null;trailArt=null;notice="Rastro circular selecionado";}));
+        sections[2].Add(MakeButton("IMPORTAR RASTRO PNG / SVG",0,267,235,()=>ImportImage(true)));
+        sections[2].Add(MakeButton("CIRCULAR",0,307,112,()=>{trailImage=null;trailArt=null;notice="Rastro circular selecionado";}));
+        sections[2].Add(MakeButton("EDITAR IMAGEM",120,307,115,()=>OpenImageEditor(CurrentSettings(),true,ApplyWorkspaceSettings)));
         hotspotDialog=new Container { Position=new Vector2(270,86),Size=new Vector2(500,340),Alpha=0,Depth=-60 };root.Add(hotspotDialog);
         var page=sections[4];
         page.Add(Label("CONFIGURACOES",0,0,12,Muted));
@@ -43,6 +44,7 @@ public partial class CursorHubGame
         darkTheme=preferences.DarkTheme; HubButton.DarkTheme=darkTheme;
         Remove(panel,true);
         sizeBinding=new(size){MinValue=8,MaxValue=48};
+        trailSizeBinding=new(trailSize){MinValue=8,MaxValue=48};
         lifetimeBinding=new(lifetime){MinValue=60,MaxValue=600};
         rateBinding=new(selectedRate){MinValue=30,MaxValue=360};
         Add(panel=BuildInterface());
@@ -55,57 +57,58 @@ public partial class CursorHubGame
         try{preferences.Save();notice="Preferencias salvas";}catch(Exception e){notice=e.Message;}nextStatus=0;
     }
     private bool importingImage;
-    private async void ImportImage(bool isTrail)
+    private void ImportImage(bool isTrail)=>ChooseImage((path,art)=>
     {
-        if(importingImage)return;
-        importingImage=true;
+        if(isTrail){trailImage=path;trailArt=art;}else{cursorImage=path;cursorArt=art;hotX=hotY=.5f;}
+        OpenImageEditor(CurrentSettings(),isTrail,ApplyWorkspaceSettings);
+        trail.Clear();notice="Imagem importada. Salve os ajustes ou o preset.";nextStatus=0;
+    });
+    private async void ChooseImage(Action<string,RasterAsset> imported)
+    {
+        if(importingImage)return;importingImage=true;
         try
         {
-            nint owner=CursorInput.FindWindow(null,windowTitle);
-            string? source=await AssetPicker.PickAsync(owner);
+            string? source=await AssetPicker.PickAsync(CursorInput.FindWindow(null,windowTitle));
             if(source is null)return;
             string path=await Task.Run(()=>RasterAsset.Import(source));
             var art=await Task.Run(()=>RasterAsset.Load(path));
-            await OnGameThread(()=>
-            {
-                _=LoadSkin(path);
-                if(isTrail){trailImage=path;trailArt=art;}
-                else{cursorImage=path;cursorArt=art;hotX=hotY=.5f;OpenHotspot();}
-                trail.Clear();notice="Imagem importada. Salve os ajustes ou um preset.";nextStatus=0;
-            });
+            await OnGameThread(()=>{_=LoadSkin(path);imported(path,art);});
         }
         catch(Exception e){await OnGameThread(()=>{notice="Importacao: "+e.Message;nextStatus=0;});}
         finally{await OnGameThread(()=>importingImage=false);}
     }
-    private void OpenHotspot()
+    private void OpenHotspot()=>OpenImageEditor(CurrentSettings(),false,ApplyWorkspaceSettings);
+    private void OpenImageEditor(HubSettings settings,bool isTrail,Action<HubSettings> apply)
     {
-        if(cursorImage is null){notice="Importe uma imagem de cursor primeiro.";nextStatus=0;return;}
+        string? image=isTrail?settings.TrailImage:settings.CursorImage;
+        if(image is null){notice="Importe uma imagem primeiro.";nextStatus=0;return;}
         hotspotDialog.Clear();hotspotDialog.Size=new Vector2(620,356);
         hotspotDialog.Add(new Box {RelativeSizeAxes=Axes.Both,Colour=darkTheme?new Color4(36,42,54,255):new Color4(237,242,247,255)});
-        hotspotDialog.Add(Label("IMAGEM / TAMANHO / HOTSPOT",16,14,14));
-        float x=hotX,y=hotY;int editSize=size,rotation=0;bool flipX=false,flipY=false;
-        string original=cursorImage,transformed=original;
+        hotspotDialog.Add(Label(isTrail?"IMAGEM / TAMANHO DO RASTRO":"IMAGEM / TAMANHO / HOTSPOT",16,14,14));
+        float x=settings.HotX,y=settings.HotY;int editSize=isTrail?settings.ResolvedTrailSize:settings.Size,rotation=0;bool flipX=false,flipY=false;
+        string original=image,transformed=original;
         var value=Label("",290,47,11,Muted);hotspotDialog.Add(value);
         var canvas=new HotspotCanvas(LoadSkin(original),x,y){Position=new Vector2(16,48)};
-        void Readout(){value.Text=$"Clique: {Math.Round(x*(editSize-1))}, {Math.Round(y*(editSize-1))} px / {rotation} graus";}
+        if(isTrail)canvas.HideCrosshair();
+        void Readout(){value.Text=isTrail?$"{rotation} graus":$"Clique: {Math.Round(x*(editSize-1))}, {Math.Round(y*(editSize-1))} px / {rotation} graus";}
         canvas.Changed=(a,b)=>{x=a;y=b;Readout();};Readout();hotspotDialog.Add(canvas);
         void Transform()
         {
-            try {transformed=RasterAsset.Transform(original,rotation,flipX,flipY);canvas.SetTexture(LoadSkin(transformed));Readout();}
+            try{transformed=RasterAsset.Transform(original,rotation,flipX,flipY);canvas.SetTexture(LoadSkin(transformed));Readout();}
             catch(Exception e){notice="Transformacao: "+e.Message;nextStatus=0;}
         }
         var options=new Container {Position=new Vector2(290,78),Size=new Vector2(310,100)};hotspotDialog.Add(options);
-        AddSlider(options,"Tamanho do ponteiro",0,editSize,8,48,v=>{editSize=v;Readout();},"px");
+        AddSlider(options,isTrail?"Tamanho do rastro":"Tamanho do ponteiro",0,editSize,8,48,v=>{editSize=v;Readout();},"px");
         hotspotDialog.Add(MakeButton("GIRAR -15",290,170,145,()=>{rotation=(rotation+345)%360;Transform();}));
         hotspotDialog.Add(MakeButton("GIRAR +15",445,170,155,()=>{rotation=(rotation+15)%360;Transform();}));
         hotspotDialog.Add(MakeButton("INVERTER X",290,212,145,()=>{flipX=!flipX;Transform();}));
         hotspotDialog.Add(MakeButton("INVERTER Y",445,212,155,()=>{flipY=!flipY;Transform();}));
-        hotspotDialog.Add(MakeButton("CENTRALIZAR",290,254,310,()=>{x=y=.5f;canvas.Set(x,y);Readout();}));
-        hotspotDialog.Add(Label("Clique ou arraste a mira",16,320,11,Muted));
+        if(!isTrail)hotspotDialog.Add(MakeButton("CENTRALIZAR",290,254,310,()=>{x=y=.5f;canvas.Set(x,y);Readout();}));
+        hotspotDialog.Add(Label(isTrail?"Transparencia preservada":"Clique ou arraste a mira",16,320,11,Muted));
         hotspotDialog.Add(MakeButton("APLICAR",290,302,145,()=>
         {
-            cursorImage=transformed;cursorArt=RasterAsset.Load(transformed);hotX=x;hotY=y;sizeBinding.Value=editSize;
-            hotspotDialog.Hide();trail.Clear();notice="Imagem e hotspot aplicados. Salve os ajustes.";nextStatus=0;
+            apply(isTrail?settings with{TrailImage=transformed,TrailSize=editSize}:settings with{CursorImage=transformed,Size=editSize,HotX=x,HotY=y});
+            hotspotDialog.Hide();trail.Clear();notice="Imagem aplicada. Salve os ajustes ou o preset.";nextStatus=0;
         }));
         hotspotDialog.Add(MakeButton("CANCELAR",445,302,155,()=>hotspotDialog.Hide()));hotspotDialog.Show();
     }

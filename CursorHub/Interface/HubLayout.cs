@@ -23,6 +23,7 @@ public partial class CursorHubGame
     private Container previewCard = null!;
     private Sprite previewPlaceholder = null!;
     private BindableInt sizeBinding = new(18) { MinValue = 8, MaxValue = 48 };
+    private BindableInt trailSizeBinding = new(18) { MinValue=8,MaxValue=48 };
     private BindableInt lifetimeBinding = new(180) { MinValue = 60, MaxValue = 600 };
     private int currentSection;
     private string notice = "Configuracoes locais";
@@ -32,7 +33,7 @@ public partial class CursorHubGame
     {
         if (darkTheme && file is "frame.png" or "nav.png" or "nav-selected.png" or "preset-card.png" or "preset-toolbar.png") file = "dark-" + file;
         if (skins.TryGetValue(file, out var cached)) return cached;
-        using var stream = File.OpenRead(Path.Combine(AppContext.BaseDirectory, "Assets", file));
+        using var stream = File.OpenRead(Path.Combine(AssetPaths.Directory, file));
         return skins[file] = Texture.FromStream(Host.Renderer, stream) ?? throw new InvalidOperationException("Imagem invalida: " + file);
     }
 
@@ -61,7 +62,7 @@ public partial class CursorHubGame
             root.Add(sections[i] = new Container { Position = new Vector2(264, 100), Size = new Vector2(235, 345) });
         }
         root.Add(Label("DESKTOP PERSONALIZATION", 27, 367, 9, Muted));
-        root.Add(Label("osu!framework / v0.8.2", 27, 384, 11));
+        root.Add(Label("osu!framework / v0.9.0", 27, 384, 11));
         root.Add(Label("CTRL + SHIFT + X  /  PARAR", 27, 410, 9, Muted));
 
         sections[1].Add(Label("APARENCIA", 0, 0, 11, Muted));
@@ -77,11 +78,11 @@ public partial class CursorHubGame
         }
         sections[1].Add(Label("Formato inicial: circular", 0, 210, 11, Muted));
 
-        sections[2].Add(Label("MOVIMENTO", 0, 0, 11, Muted));
-        AddSlider(sections[2], "Duracao do rastro", 34, lifetime, 60, 600, value => lifetime = value, "ms", lifetimeBinding);
-        sections[2].Add(Label("Rastro continuo", 0, 133, 16));
-        sections[2].Add(Label("Historico real de movimento", 0, 159, 12, Muted));
-        sections[2].Add(Label("Ate 512 particulas reutilizadas", 0, 181, 12, Muted));
+        sections[2].Add(Label("RASTRO",0,0,11,Muted));
+        AddSlider(sections[2],"Tamanho do rastro",24,trailSize,8,48,v=>trailSize=v,"px",trailSizeBinding);
+        AddSlider(sections[2],"Duracao do rastro",108,lifetime,60,600,v=>lifetime=v,"ms",lifetimeBinding);
+        sections[2].Add(Label("Cor do rastro",0,198,12));
+        for(int i=0;i<palette.Length;i++){int c=i;var swatch=MakeButton("",i*51,222,38,()=>trailColourIndex=c);swatch.BackgroundColour=palette[i];swatch.Height=28;sections[2].Add(swatch);}
 
         sections[3].Add(Label("ORCAMENTO DE RENDERIZACAO", 0, 0, 10, Muted));
         AddSlider(sections[3], "Limite de desenho", 28, selectedRate, 30, 360, value =>
@@ -160,7 +161,7 @@ public partial class CursorHubGame
         Text = text, Position = new Vector2(x, y), Width = width, Height = 34, Action = action
     };
 
-    private static void AddSlider(Container parent, string title, float y, int value, int min, int max, Action<int> changed, string unit, BindableInt? binding = null)
+    private void AddSlider(Container parent, string title, float y, int value, int min, int max, Action<int> changed, string unit, BindableInt? binding = null)
     {
         parent.Add(Label(title, 0, y));
         var number = Label($"{value} {unit}", 0, y + 27, 23, Orange);
@@ -168,17 +169,19 @@ public partial class CursorHubGame
         var current = binding ?? new BindableInt(value) { MinValue = min, MaxValue = max };
         current.Value = value;
         current.BindValueChanged(e => { changed(e.NewValue); number.Text = $"{e.NewValue} {unit}"; });
-        parent.Add(new BasicSliderBar<int>
-        {
-            Position = new Vector2(0, y + 66), Size = new Vector2(222, 8),
-            Current = current, BackgroundColour = new Color4(213, 217, 225, 255), SelectionColour = Orange
-        });
+        parent.Add(new HubSlider(current,LoadSkin("slider-track.png"),LoadSkin("slider-thumb.png"),Orange)
+        {Position=new Vector2(0,y+62)});
     }
 
     private void UpdateEconomyLabel() => economyButton.Text = $"Economia: {(economy ? "ligada" : "desligada")}";
     private void SaveSettings()
     {
-        try { CurrentSettings().Save(); notice = "Configuracoes salvas"; }
+        try {
+            var settings=CurrentSettings();settings.Save();
+            var selected=presets.Items.FirstOrDefault(p=>p.Id==demonstratedPreset);
+            if(selected is not null){presets.Put(selected with {Settings=settings});RefreshPresets();}
+            notice = selected is null?"Configuracoes salvas":"Preset e miniatura atualizados";
+        }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { notice = "Nao foi possivel salvar"; }
         nextStatus = 0;
     }

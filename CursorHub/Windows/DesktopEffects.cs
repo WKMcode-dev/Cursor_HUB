@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 
 namespace CursorHub.Windows;
 
-internal sealed record EffectOptions(int Size, int Lifetime, int Rate, byte R, byte G, byte B, bool CustomizeCursor = true, RasterAsset? CursorArt = null, RasterAsset? TrailArt = null, float HotX = .5f, float HotY = .5f, bool History = true, int Particles = 512);
+internal sealed record EffectOptions(int Size, int Lifetime, int Rate, byte R, byte G, byte B, bool CustomizeCursor = true, RasterAsset? CursorArt = null, RasterAsset? TrailArt = null, float HotX = .5f, float HotY = .5f, bool History = true, int Particles = 512, int TrailSize = 18, byte? TrailR = null, byte? TrailG = null, byte? TrailB = null);
 
 internal sealed class DesktopEffects : IDisposable
 {
@@ -102,7 +102,7 @@ internal sealed class DesktopEffects : IDisposable
                     else if (!LayeredSurface.GetCursorPos(out point)) { surface.Hide(); wake.WaitOne(30); continue; }
                     bool moved = last is null || point.X != last.Value.X || point.Y != last.Value.Y;
                     last = point;
-                    float spacing = Math.Max(1, settings.Size / 8f);
+                    float spacing = Math.Max(1, settings.TrailSize / 8f);
                     if (probePosition is null && settings.History)
                     {
                         int count = history.Read(point.X, point.Y, frameStart, moves);
@@ -111,7 +111,7 @@ internal sealed class DesktopEffects : IDisposable
                     trail.Advance(new Vector2(point.X, point.Y), frameStart, settings.Lifetime, spacing);
                     if (moved || trail.Count > 0)
                     {
-                        int padding = settings.Size + 3;
+                        int padding = settings.TrailSize + 3;
                         int left = point.X - padding, top = point.Y - padding, right = point.X + padding, bottom = point.Y + padding;
                         // Cover the complete retained trajectory; grow only when needed.
                         for (int i = 0; i < trail.Count; i++)
@@ -129,9 +129,9 @@ internal sealed class DesktopEffects : IDisposable
                         {
                             var sample = trail[i];
                             float remaining = Math.Clamp(1 - (float)((frameStart - sample.Born) / settings.Lifetime), 0, 1);
-                            if(settings.TrailArt is {} art) LayeredSurface.Stamp(pixels, surface.Stride,width,height,sample.Position.X-left,sample.Position.Y-top,settings.Size*(.25f+remaining*.65f),art,remaining*.65f*(1-Math.Clamp((trail.Count-trail.Capacity+24)/24f,0,1)*(1-Math.Min(1,(i+1)/24f))));
+                            if(settings.TrailArt is {} art) LayeredSurface.Stamp(pixels, surface.Stride,width,height,sample.Position.X-left,sample.Position.Y-top,settings.TrailSize*(.25f+remaining*.65f),art,remaining*.65f*(1-Math.Clamp((trail.Count-trail.Capacity+24)/24f,0,1)*(1-Math.Min(1,(i+1)/24f))));
                             else LayeredSurface.Circle(pixels, surface.Stride, width, height,
-                                sample.Position.X - left, sample.Position.Y - top, settings.Size * (.125f + remaining * .325f), settings.R, settings.G, settings.B, remaining * .65f * (1-Math.Clamp((trail.Count-trail.Capacity+24)/24f,0,1)*(1-Math.Min(1,(i+1)/24f))));
+                                sample.Position.X - left, sample.Position.Y - top, settings.TrailSize * (.125f + remaining * .325f), settings.TrailR ?? settings.R, settings.TrailG ?? settings.G, settings.TrailB ?? settings.B, remaining * .65f * (1-Math.Clamp((trail.Count-trail.Capacity+24)/24f,0,1)*(1-Math.Min(1,(i+1)/24f))));
                         }
                         surface.Present(left, top, width, height); visible = true;
                         Interlocked.Increment(ref frames);

@@ -1,9 +1,11 @@
-Cursor Hub 0.8.2 — correcao da importacao de PNG/SVG
+Cursor Hub 0.9.0 — executavel unico e editor completo de presets
 
-- Seletor nativo abre em uma thread STA dedicada, sem bloquear a atualizacao do app.
-- Erros do dialogo sao diferenciados de cancelamento; cliques repetidos nao abrem seletores duplicados.
-- Importacao processa a imagem fora da thread da interface e aplica a textura na thread correta.
-- Icones de fechar, minimizar e maximizar centralizados geometricamente no SVG, mantendo o recorte.
-- Teste Windows abre e cancela de verdade o seletor a partir de chamadas STA e MTA.
+- Distribuicao em um unico .exe para Windows x64. Pode ser movido sozinho; runtime, bibliotecas e assets sao incluidos e preparados automaticamente.
+- Tamanho e cor do cursor independentes do tamanho e cor do rastro, com migracao visual dos presets antigos.
+- Editor com abas CURSOR, RASTRO e AJUSTES: imagens PNG/SVG, giro, inversoes, hotspot, tamanhos, cores, duracao, Hz e economia.
+- Salvar ajustes atualiza tambem o preset selecionado e sua miniatura; salvar no editor preserva todos os campos.
+- Cards novos/vazios usam o mesmo SVG dos presets; sinais + geometricamente centralizados.
+- Sliders usam o slide_adjust.svg enviado, com preenchimento e bolinha dinamicos.
+- Verificacoes executadas a partir de uma pasta contendo apenas o .exe, incluindo dialogo de arquivos, interface e compositor.
 
-Extraia o ZIP inteiro e execute CursorHub.exe. Nao requer .NET ou Visual Studio instalados.
+Feche a versao antiga e abra CursorHub-0.9.0-win-x64.exe. Nao requer .NET ou Visual Studio instalados.

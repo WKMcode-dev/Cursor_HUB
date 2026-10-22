@@ -12,6 +12,7 @@ public partial class HotspotCanvas : Container
     private readonly Box vertical, horizontal;
     private readonly Sprite image;
     public void SetTexture(Texture texture) => image.Texture=texture;
+    public void HideCrosshair(){vertical.Hide();horizontal.Hide();}
     public Action<float,float>? Changed;
     public HotspotCanvas(Texture texture, float x, float y)
     {
