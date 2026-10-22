@@ -104,3 +104,26 @@ A verificacao automatizada confere 8 px antes e depois de maximizar e restaurar,
 Limite manual de 30 a 360Hz (atalhos 60,75,144,165), aplicado ao rastro ativo sem trocar novamente o cursor. A frequencia real depende da capacidade do sistema. A taxa nao altera as configuracoes do monitor. A economia da previa parada continua separada do compositor.
 
 MouseHistory usa GetMouseMovePointsEx (Microsoft Learn: https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getmousemovepointsex) para recuperar posicoes intermediarias reais. Historico de ate64pontos, ordem cronologica, descarte de tempos antigos e tratamento de coordenadas negativas. Falha na API recai na captura atual; nao se aplica spline que invente o trajeto. O buffer de512pontos limita memoria e trabalho, podendo descartar o inicio de um rastro longo em movimentos muito rapidos.
+
+## Atualizacao 0.8.0
+
+O tema muda imediatamente e preserva os ajustes e a secao aberta. O Play mostra
+INICIANDO, STOP ou PARANDO conforme a confirmacao do compositor; cliques durante
+transicoes substituem a intencao anterior. Ctrl+Shift+X continua interrompendo os efeitos.
+
+Importe PNG/SVG em CURSOR e abra EDITAR HOTSPOT para alterar tamanho (8–48 px),
+girar em passos de 15 graus, inverter X/Y e escolher o pixel de clique na mira.
+APLICAR atualiza a demonstracao; SALVAR AJUSTES persiste a escolha. Um efeito ja
+ativo usa os ajustes da ultima ativacao: pare e ative novamente para trocar.
+
+Kode Mono usa uma atlas BMFont gerada de uma revisao fixa do repositorio oficial
+google/fonts, distribuida com sua licenca OFL. O workflow gera os arquivos com
+Tools/Build-Font.py (Pillow 12.1.0). A compilacao portatil inclui a fonte e nao exige
+sua instalacao no Windows.
+
+A matriz automatizada combina 64 sequencias de estados e 135 trajetorias
+(3 limites de particulas x 3 duracoes x 5 taxas x 3 velocidades). O teste nativo
+verifica 20 ciclos rapidos de Play/Stop e uma superficie de 1400x1100 pixels.
+As capturas validam ambos os temas, troca ao vivo e restauracao da janela.
+Isso nao mede latencia ou consumo em todo hardware e nao comprova suporte a
+jogos em tela cheia exclusiva ou com restricoes de sobreposicao.

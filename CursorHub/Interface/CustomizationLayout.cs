@@ -84,7 +84,7 @@ public partial class CursorHubGame
         }
         var options=new Container {Position=new Vector2(290,78),Size=new Vector2(310,100)};hotspotDialog.Add(options);
         AddSlider(options,"Tamanho do ponteiro",0,editSize,8,48,v=>{editSize=v;Readout();},"px");
-        hotspotDialog.Add(MakeButton("GIRAR -15",290,170,145,()=>{rotation=(rotation-15)%360;Transform();}));
+        hotspotDialog.Add(MakeButton("GIRAR -15",290,170,145,()=>{rotation=(rotation+345)%360;Transform();}));
         hotspotDialog.Add(MakeButton("GIRAR +15",445,170,155,()=>{rotation=(rotation+15)%360;Transform();}));
         hotspotDialog.Add(MakeButton("INVERTER X",290,212,145,()=>{flipX=!flipX;Transform();}));
         hotspotDialog.Add(MakeButton("INVERTER Y",445,212,155,()=>{flipY=!flipY;Transform();}));

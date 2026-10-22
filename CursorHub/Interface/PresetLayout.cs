@@ -150,7 +150,7 @@ public partial class CursorHubGame
         int editSize = s.Size, editLifetime = s.Lifetime, editColour = Math.Clamp(s.Colour, 0, palette.Length - 1);
         presetEditor.Add(new Box { RelativeSizeAxes = Axes.Both, Colour = darkTheme?new Color4(36,42,54,255):new Color4(238, 241, 246, 255) });
         presetEditor.Add(Label(existing is null ? "NOVO PRESET" : "EDITAR PRESET", 16, 14, 14, Orange));
-        var name = new BasicTextBox { Position = new Vector2(16, 42), Size = new Vector2(302, 32), Text = existing?.Name ?? $"Preset {presets.Items.Count + 1}", PlaceholderText = "Nome do preset" };
+        var name = new HubTextBox { Position = new Vector2(16, 42), Size = new Vector2(302, 32), Text = existing?.Name ?? $"Preset {presets.Items.Count + 1}", PlaceholderText = "Nome do preset" };
         presetEditor.Add(name);
         var options = new Container { Position = new Vector2(16, 88), Size = new Vector2(300, 185) };
         AddSlider(options, "Tamanho", 0, Math.Clamp(editSize, 8, 48), 8, 48, value => editSize = value, "px");
