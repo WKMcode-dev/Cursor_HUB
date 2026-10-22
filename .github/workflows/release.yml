@@ -28,6 +28,15 @@ jobs:
           $version = (Get-Content CursorHub/RELEASE_VERSION -Raw).Trim()
           if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'Invalid release version' }
           "RELEASE_VERSION=$version" >> $env:GITHUB_ENV
+      - name: Prepare Kode Mono font
+        run: |
+          python -m pip install pillow==12.1.0
+          New-Item -ItemType Directory -Force CursorHub/Assets/Fonts | Out-Null
+          $base = 'https://raw.githubusercontent.com/google/fonts/909667d11fe41a8384294d064950c48c53904d27/ofl/kodemono'
+          Invoke-WebRequest "$base/KodeMono%5BROND%2Cwdth%2Cwght%5D.ttf" -OutFile CursorHub/Assets/Fonts/KodeMono.ttf
+          Invoke-WebRequest "$base/OFL.txt" -OutFile CursorHub/Assets/Fonts/OFL.txt
+          python CursorHub/Tools/Build-Font.py CursorHub/Assets/Fonts
+          if ($LASTEXITCODE -ne 0) { throw 'Font generation failed' }
       - name: Run core checks
         run: |
           dotnet run --project CursorHub/Checks/Checks.csproj -c Release

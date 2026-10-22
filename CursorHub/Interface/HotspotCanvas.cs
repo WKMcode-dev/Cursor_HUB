@@ -10,6 +10,8 @@ namespace CursorHub.Interface;
 public partial class HotspotCanvas : Container
 {
     private readonly Box vertical, horizontal;
+    private readonly Sprite image;
+    public void SetTexture(Texture texture) => image.Texture=texture;
     public Action<float,float>? Changed;
     public HotspotCanvas(Texture texture, float x, float y)
     {
@@ -17,7 +19,7 @@ public partial class HotspotCanvas : Container
         Add(new Box { RelativeSizeAxes = Axes.Both, Colour = new Color4(217,223,233,255) });
         for (int row=0;row<16;row++) for(int col=0;col<16;col++)
             if ((row+col)%2==0) Add(new Box { Position=new Vector2(col*16,row*16),Size=new Vector2(16),Colour=new Color4(245,247,251,255) });
-        Add(new Sprite { Texture=texture,RelativeSizeAxes=Axes.Both,Size=Vector2.One });
+        Add(image=new Sprite { Texture=texture,RelativeSizeAxes=Axes.Both,Size=Vector2.One });
         Add(vertical=new Box { Width=1, Height=256,Colour=new Color4(204,52,113,255) });
         Add(horizontal=new Box { Width=256,Height=1,Colour=new Color4(204,52,113,255) });
         Set(x,y);

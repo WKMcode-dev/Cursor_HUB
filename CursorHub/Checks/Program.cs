@@ -4,7 +4,7 @@ using CursorHub.Core;
 static void Check(bool condition, string name)
 {
     if (!condition) throw new Exception(name);
-    Console.WriteLine("PASS " + name);
+    // Successful assertions are summarized after each scenario group.
 }
 
 var trail = new TrailBuffer(16);
@@ -118,3 +118,38 @@ Check(stampBuffer.All(p=>((p>>16)&255)<=(p>>24) && ((p>>8)&255)<=(p>>24) && (p&2
 var imagePreset=new CursorHub.Interface.HubSettings(CursorImage:"cursor.png",TrailImage:"trail.png",HotX:.1f,HotY:.8f,Rate:165);
 var roundtrip=System.Text.Json.JsonSerializer.Deserialize<CursorHub.Interface.HubSettings>(System.Text.Json.JsonSerializer.Serialize(imagePreset));
 Check(roundtrip==imagePreset,"preset preserva imagens e hotspot");
+
+// Exhaustive sequences of six user requests, each with stale completion/failure callbacks.
+int combinations=0;
+for(int mask=0;mask<64;mask++)
+{
+    var state=new PlaybackState();long old=0;
+    for(int action=0;action<6;action++)
+    {
+        bool requested=(mask&(1<<action))!=0;
+        long revision=state.Request(requested);
+        state.Complete(old,!requested);state.Fail(old);
+        Check(state.Snapshot.Requested==requested,"resposta antiga nao muda pedido atual");
+        state.Complete(revision,requested);
+        Check(state.Snapshot.Phase==(requested?PlaybackPhase.Playing:PlaybackPhase.Stopped),"estado confirmado corresponde ao pedido mais recente");
+        old=revision;
+    }
+    combinations++;
+}
+for(int capacity=256;capacity<=1024;capacity*=2)
+foreach(int duration in new[]{60,180,600})
+foreach(int rate in new[]{30,60,75,165,360})
+foreach(int speed in new[]{100,1000,5000})
+{
+    var path=new TrailBuffer(capacity);
+    for(int frame=0;frame<rate*2;frame++)
+    {
+        double now=frame*1000.0/rate;
+        float angle=frame*speed/(float)rate/200;
+        path.Advance(new Vector2(MathF.Cos(angle),MathF.Sin(angle))*200,now,duration,1);
+        Check(path.Count<=capacity,"limite de memoria do rastro");
+        for(int i=0;i<path.Count;i++)Check(now-path[i].Born<duration+.001,"particulas expiradas removidas");
+    }
+    combinations++;
+}
+Console.WriteLine($"PASS matriz combinatoria: {combinations} cenarios (64 sequencias de estado, 135 trajetorias)");

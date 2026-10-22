@@ -1,14 +1,11 @@
-## Cursor Hub 0.7.1
+Cursor Hub 0.8.0 — Windows x64 portatil (pre-release)
 
-- Botoes de imagem agora usam ClickableContainer proprio, sem camadas de hover/flash do BasicButton.
-- Nova pagina Configuracoes: tema claro/escuro (proxima abertura), animacoes, captura detalhada, limite de particulas e acesso ao ajuste de Hz.
-- Importacao PNG/SVG para cursor e rastro. Imagens normalizadas, copiadas para os dados locais e reutilizadas durante o movimento.
-- Editor de hotspot com transparencia em xadrez, mira arrastavel, centralizar, aplicar e cancelar. O hotspot e utilizado pelo cursor nativo do Windows.
-- Presets e ajustes guardam imagens e hotspot.
-- Captura do rastro preserva posicoes diferentes com o mesmo timestamp, antes descartadas pelo filtro temporal.
+- Tema aplicado imediatamente, inclusive com janela maximizada.
+- Estados versionados de Play/Stop: respostas atrasadas nao sobrescrevem novos pedidos.
+- Superficie alfa acompanha o trajeto inteiro; cauda com desaparecimento gradual no limite de particulas.
+- Miniaturas usam a imagem, a cor e o formato do cursor e do rastro de cada preset.
+- Divisoria SVG fornecida, controles geometricos no recorte superior e fonte Kode Mono (OFL).
+- Editor de imagem: tamanho 8–48 px, giro de 15 graus, inversao X/Y e hotspot sincronizado.
+- Matriz automatizada de 199 cenarios de estados e trajetorias, verificacao nativa e capturas nos dois temas.
 
-Baixe **CursorHub-0.7.1-win-x64.zip**, extraia toda a pasta e abra **CursorHub.exe**. Inclui runtime .NET. Feche a versao anterior primeiro.
-
-Para usar imagens: Cursor > Importar cursor > posicionar hotspot; Rastro > Importar rastro. Salvar ajustes preserva as escolhas; Play aplica o cursor no desktop. Depois de editar um cursor ativo, pare e reative Play.
-
-SVGs devem ser estaticos e autocontidos. A importacao prepara um bitmap com alfa; nao interpreta o SVG a cada quadro. Arquivos do tema do Windows nao sao modificados. Continua sendo pre-release; jogos em tela cheia exclusiva podem impedir sobreposicoes. Impacto e fidelidade em movimentos rapidos ainda precisam de medicao em hardware real. Avisos transitivos conhecidos de ImageSharp permanecem pendentes.
+Extraia todo o ZIP e execute CursorHub.exe. Nao requer .NET ou Visual Studio instalados.

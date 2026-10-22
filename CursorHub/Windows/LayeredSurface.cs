@@ -40,10 +40,12 @@ internal sealed unsafe class LayeredSurface : IDisposable
     [DllImport("user32.dll")] private static extern bool TranslateMessage(ref Message message);
     [DllImport("user32.dll")] private static extern nint DispatchMessage(ref Message message);
 
-    private readonly nint window, dc, oldBitmap;
-    private readonly nint bitmap;
-    private readonly nint bits;
-    private readonly int bufferWidth, bufferHeight;
+    private readonly nint window, dc;
+    private nint oldBitmap;
+    private nint bitmap;
+    private nint bits;
+    private int bufferWidth, bufferHeight;
+    public int Stride => bufferWidth;
     private readonly bool topmost;
     public const int Extent = 1024;
     public Span<uint> Pixels => new((void*)bits, bufferWidth * bufferHeight);
@@ -65,6 +67,17 @@ internal sealed unsafe class LayeredSurface : IDisposable
         }
         catch { Dispose(); throw; }
         finally { ReleaseDC(0, screen); }
+    }
+
+    public void EnsureCapacity(int width,int height)
+    {
+        if(width<=bufferWidth && height<=bufferHeight)return;
+        int w=Math.Max(bufferWidth,((width+255)/256)*256),h=Math.Max(bufferHeight,((height+255)/256)*256);
+        if(w>16384 || h>16384 || (long)w*h>16_777_216) throw new InvalidOperationException("Rastro excedeu a area suportada. Reduza a duracao.");
+        var info=new BitmapInfo{Size=(uint)Marshal.SizeOf<BitmapInfo>(),Width=w,Height=-h,Planes=1,BitCount=32};
+        nint next=CreateDIBSection(0,ref info,0,out var nextBits,0,0);
+        if(next==0 || nextBits==0)throw new Win32Exception();
+        SelectObject(dc,next);DeleteObject(bitmap);bitmap=next;bits=nextBits;bufferWidth=w;bufferHeight=h;
     }
 
     public void Present(int x, int y, int width, int height)

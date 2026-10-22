@@ -51,6 +51,24 @@ internal sealed partial record RasterAsset
         if (!File.Exists(target)) File.WriteAllBytes(target, bytes);
         return target;
     }
+    // Transform from the editor's original on every change, avoiding cumulative resampling.
+    public static string Transform(string source, int degrees, bool flipX, bool flipY)
+    {
+        using var image=SKBitmap.Decode(source) ?? throw new InvalidOperationException("Imagem indisponivel.");
+        using var bitmap=new SKBitmap(256,256,SKColorType.Bgra8888,SKAlphaType.Premul);
+        using var canvas=new SKCanvas(bitmap);canvas.Clear(SKColors.Transparent);
+        canvas.Translate(128,128);canvas.RotateDegrees(degrees);canvas.Scale(flipX?-1:1,flipY?-1:1);
+        // Fit the rotated square so no image pixels are cut off.
+        float radians=degrees*MathF.PI/180;
+        float fit=1/(MathF.Abs(MathF.Cos(radians))+MathF.Abs(MathF.Sin(radians)));
+        canvas.Scale(fit,fit);
+        using var paint=new SKPaint {IsAntialias=true,FilterQuality=SKFilterQuality.High};
+        canvas.DrawBitmap(image,SKRect.Create(-128,-128,256,256),paint);canvas.Flush();
+        using var encoded=bitmap.Encode(SKEncodedImageFormat.Png,100);var bytes=encoded.ToArray();
+        string directory=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"CursorHub","Images");Directory.CreateDirectory(directory);
+        string target=Path.Combine(directory,Convert.ToHexString(SHA256.HashData(bytes))+".png");
+        if(!File.Exists(target))File.WriteAllBytes(target,bytes);return target;
+    }
     public static RasterAsset Load(string path)
     {
         using var image = SKBitmap.Decode(path) ?? throw new InvalidOperationException("Imagem nao encontrada.");

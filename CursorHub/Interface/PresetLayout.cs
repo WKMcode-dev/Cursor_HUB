@@ -56,11 +56,16 @@ public partial class CursorHubGame
                 button.Skin = LoadSkin("preset-card.png");
                 button.SkinColour = preset.Id == demonstratedPreset ? new Color4(221, 241, 243, 255) : Color4.White;
                 card.Add(button);
-                card.Add(new osu.Framework.Graphics.Sprites.Sprite
+                var cfg=preset.Settings;
+                var colour=palette[Math.Clamp(cfg.Colour,0,palette.Length-1)];
+                string Existing(string? path)=>path is not null && File.Exists(path)?path:"particle.png";
+                float diameter=8+(Math.Clamp(cfg.Size,8,48)-8)*.45f;
+                for(int t=0;t<4;t++)
                 {
-                    Texture = LoadSkin("cursor.png"), Position = new Vector2(20, 16), Size = new Vector2(24, 30),
-                    Colour = palette[Math.Clamp(preset.Settings.Colour, 0, palette.Length - 1)]
-                });
+                    float amount=(t+1)/5f;
+                    card.Add(new Sprite {Texture=LoadSkin(Existing(cfg.TrailImage)),Position=new Vector2(14+t*7,36-t*4),Origin=Anchor.Centre,Size=new Vector2(diameter*(.25f+.65f*amount)),Colour=cfg.TrailImage is null?colour:Color4.White,Alpha=amount*.65f});
+                }
+                card.Add(new Sprite {Texture=LoadSkin(Existing(cfg.CursorImage)),Position=new Vector2(43,19),Origin=Anchor.Centre,Size=new Vector2(diameter),Colour=cfg.CursorImage is null?colour:Color4.White});
                 var name = preset.Name.Length > 9 ? preset.Name[..8] + ".." : preset.Name;
                 card.Add(Label(name, 6, 57, 8));
                 int selectedCell = cell;
@@ -82,7 +87,7 @@ public partial class CursorHubGame
             {
                 // Empty slots are static geometry, never fictitious saved presets.
                 var empty = new Container { Position = new Vector2(x, y), Size = new Vector2(72, 72), Masking = true, CornerRadius = 4, BorderThickness = 1, BorderColour = new Color4(228, 229, 232, 255) };
-                empty.Add(new Box { RelativeSizeAxes = Axes.Both, Colour = new Color4(244, 245, 248, 255) });
+                empty.Add(new Box { RelativeSizeAxes = Axes.Both, Colour = darkTheme?new Color4(37,43,55,255):new Color4(244, 245, 248, 255) });
                 empty.Add(Label("+", 31, 21, 13, new Color4(196, 201, 210, 255)));
                 presetRows.Add(empty);
             }

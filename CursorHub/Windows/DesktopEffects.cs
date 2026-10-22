@@ -10,6 +10,8 @@ internal sealed record EffectOptions(int Size, int Lifetime, int Rate, byte R, b
 internal sealed class DesktopEffects : IDisposable
 {
     [DllImport("user32.dll")] private static extern nint SetThreadDpiAwarenessContext(nint context);
+    internal readonly PlaybackState Playback = new();
+    private readonly object requestGate = new();
     private readonly Thread thread;
     private readonly Func<LayeredSurface.Point>? probePosition;
     private readonly AutoResetEvent wake = new(false);
@@ -33,8 +35,8 @@ internal sealed class DesktopEffects : IDisposable
     }
     public void Play(EffectOptions options)
     {
-        if (!thread.IsAlive) { Volatile.Write(ref error, error ?? "A camada global nao esta disponivel."); return; }
-        Volatile.Write(ref error, null); Volatile.Write(ref warning, null); Volatile.Write(ref requested, options); wake.Set();
+        if (!thread.IsAlive) { lock(requestGate){var revision=Playback.Request(true);Playback.Fail(revision);} Volatile.Write(ref error, error ?? "A camada global nao esta disponivel."); return; }
+        lock(requestGate){Playback.Request(true);Volatile.Write(ref error,null);Volatile.Write(ref warning,null);Volatile.Write(ref requested,options);}wake.Set();
     }
     public void SetRate(int rate)
     {
@@ -42,7 +44,7 @@ internal sealed class DesktopEffects : IDisposable
         if (current is not null) Interlocked.CompareExchange(ref requested, current with { Rate = Math.Clamp(rate, 30, 360) }, current);
         wake.Set();
     }
-    public void Stop() { Volatile.Write(ref requested, null); wake.Set(); }
+    public void Stop() { lock(requestGate){Playback.Request(false);Volatile.Write(ref requested,null);} wake.Set(); }
 
     private void Run()
     {
@@ -62,14 +64,15 @@ internal sealed class DesktopEffects : IDisposable
             while (!closing)
             {
                 LayeredSurface.Pump();
-                var settings = Volatile.Read(ref requested);
+                EffectOptions? settings;long revision;
+                lock(requestGate){settings=Volatile.Read(ref requested);revision=Playback.Snapshot.Revision;}
                 bool chord = LayeredSurface.GetAsyncKeyState(0x11) < 0 && LayeredSurface.GetAsyncKeyState(0x10) < 0 && LayeredSurface.GetAsyncKeyState(0x58) < 0;
                 if (chord && !chordHeld) { Stop(); settings = null; }
                 chordHeld = chord;
                 if (settings is null)
                 {
                     if (applied is not null) { cursors.Restore(); surface.Hide(); trail.Clear(); history.Reset(); applied = null; last = null; visible = false; }
-                    active = false;
+                    active = false;Playback.Complete(revision,false);
                     wake.WaitOne(60);
                     continue;
                 }
@@ -92,7 +95,7 @@ internal sealed class DesktopEffects : IDisposable
                         else if (changedCursor) cursors.Restore();
                         applied = settings;
                     }
-                    active = true;
+                    active = true;Playback.Complete(revision,true);
                     double frameStart = clock.Elapsed.TotalMilliseconds;
                     LayeredSurface.Point point;
                     if (probePosition is not null) point = probePosition();
@@ -110,24 +113,25 @@ internal sealed class DesktopEffects : IDisposable
                     {
                         int padding = settings.Size + 3;
                         int left = point.X - padding, top = point.Y - padding, right = point.X + padding, bottom = point.Y + padding;
-                        // Ignore points too far from the tip rather than allocating desktop-sized bitmaps.
+                        // Cover the complete retained trajectory; grow only when needed.
                         for (int i = 0; i < trail.Count; i++)
                         {
                             var p = trail[i].Position;
-                            if (Math.Abs(p.X - point.X) > 450 || Math.Abs(p.Y - point.Y) > 450) continue;
+                            
                             left = Math.Min(left, (int)p.X - padding); right = Math.Max(right, (int)p.X + padding);
                             top = Math.Min(top, (int)p.Y - padding); bottom = Math.Max(bottom, (int)p.Y + padding);
                         }
-                        int width = Math.Min(LayeredSurface.Extent, right - left + 1), height = Math.Min(LayeredSurface.Extent, bottom - top + 1);
+                        int width = right-left+1, height=bottom-top+1;
+                        surface.EnsureCapacity(width,height);
                         var pixels = surface.Pixels;
-                        for (int row = 0; row < height; row++) pixels.Slice(row * LayeredSurface.Extent, width).Clear();
+                        for (int row = 0; row < height; row++) pixels.Slice(row * surface.Stride, width).Clear();
                         for (int i = 0; i < trail.Count; i++)
                         {
                             var sample = trail[i];
                             float remaining = Math.Clamp(1 - (float)((frameStart - sample.Born) / settings.Lifetime), 0, 1);
-                            if(settings.TrailArt is {} art) LayeredSurface.Stamp(pixels, LayeredSurface.Extent,width,height,sample.Position.X-left,sample.Position.Y-top,settings.Size*(.25f+remaining*.65f),art,remaining*.65f);
-                            else LayeredSurface.Circle(pixels, LayeredSurface.Extent, width, height,
-                                sample.Position.X - left, sample.Position.Y - top, settings.Size * (.125f + remaining * .325f), settings.R, settings.G, settings.B, remaining * .65f);
+                            if(settings.TrailArt is {} art) LayeredSurface.Stamp(pixels, surface.Stride,width,height,sample.Position.X-left,sample.Position.Y-top,settings.Size*(.25f+remaining*.65f),art,remaining*.65f*Math.Min(1,(i+1)/24f));
+                            else LayeredSurface.Circle(pixels, surface.Stride, width, height,
+                                sample.Position.X - left, sample.Position.Y - top, settings.Size * (.125f + remaining * .325f), settings.R, settings.G, settings.B, remaining * .65f * Math.Min(1,(i+1)/24f));
                         }
                         surface.Present(left, top, width, height); visible = true;
                         Interlocked.Increment(ref frames);
@@ -141,11 +145,12 @@ internal sealed class DesktopEffects : IDisposable
                 {
                     Volatile.Write(ref details, exception.ToString());
                     Volatile.Write(ref error, exception.Message);
-                    Stop(); cursors.Restore(); surface.Hide(); applied = null; active = false;
+                    lock(requestGate){if(Playback.Snapshot.Revision==revision){Volatile.Write(ref requested,null);Playback.Fail(revision);}}
+                    cursors.Restore(); surface.Hide(); applied = null; active = false;
                 }
             }
         }
-        catch (Exception exception) { Volatile.Write(ref details, exception.ToString()); Volatile.Write(ref error, exception.Message); active = false; }
+        catch (Exception exception) { Volatile.Write(ref details, exception.ToString()); Volatile.Write(ref error, exception.Message); active = false;Playback.Fail(Playback.Snapshot.Revision); }
     }
     public void Dispose()
     {

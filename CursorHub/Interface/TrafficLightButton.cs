@@ -18,7 +18,7 @@ public partial class TrafficLightButton : HubButton
     protected override SpriteText CreateText() => new()
     {
         Anchor = Anchor.Centre, Origin = Anchor.Centre,
-        Font = new FontUsage(size: 12), Colour = new Color4(40, 35, 30, 255), Alpha = 0
+        Font = new FontUsage(family: "KodeMono", size: 12), Colour = new Color4(226, 243, 246, 255), Alpha = 1
     };
 
     protected override bool OnHover(HoverEvent e)
@@ -30,6 +30,6 @@ public partial class TrafficLightButton : HubButton
     protected override void OnHoverLost(HoverLostEvent e)
     {
         base.OnHoverLost(e);
-        SpriteText.Alpha = 0;
+        SpriteText.Alpha = 1;
     }
 }

@@ -28,7 +28,7 @@ public partial class CursorHubGame : Game
     private SpriteText status = null!;
     private CursorInput? input;
     private DesktopEffects? desktop;
-    private bool playing, desktopWasActive;
+    private bool playing;
     private string? reportedDesktopError;
     private string? reportedDesktopWarning;
     private WindowChrome? chrome;
@@ -53,6 +53,9 @@ public partial class CursorHubGame : Game
         config.SetValue(FrameworkSetting.FrameSync, FrameSync.Unlimited);
         config.SetValue(FrameworkSetting.WindowMode, WindowMode.Windowed);
         config.SetValue(FrameworkSetting.WindowedSize, new System.Drawing.Size(1320, 600));
+        Fonts.AddStore(new osu.Framework.IO.Stores.GlyphStore(
+            new osu.Framework.IO.Stores.ResourceStore<byte[]>(new osu.Framework.IO.Stores.StorageBackedResourceStore(
+                new osu.Framework.Platform.NativeStorage(Path.Combine(AppContext.BaseDirectory,"Assets")))), "Fonts/KodeMono"));
         var saved = HubSettings.Load();
         darkTheme=ForceDarkVerification || preferences.DarkTheme;HubButton.DarkTheme=darkTheme;HubButton.Animations=preferences.Animations;
         cursorImage=saved.CursorImage;trailImage=saved.TrailImage;hotX=Math.Clamp(saved.HotX,0,1);hotY=Math.Clamp(saved.HotY,0,1);
@@ -92,20 +95,25 @@ public partial class CursorHubGame : Game
 
     private void TogglePlay()
     {
-        if (playing)
-        {
-            desktop?.Stop(); playing = false; desktopWasActive = false;
-            playButton.Text = "PLAY"; notice = "Cursor do Windows restaurando";
-        }
+        if(desktop is null)return;
+        var state=desktop.Playback.Snapshot;
+        if(state.Requested){desktop.Stop();notice="Desativando efeitos";}
         else
         {
-            reportedDesktopError = null; reportedDesktopWarning = null;
-            var c = Accent;
-            desktop?.Play(new EffectOptions(size, lifetime, selectedRate, (byte)(c.R * 255), (byte)(c.G * 255), (byte)(c.B * 255), true, cursorArt, trailArt, hotX, hotY, preferences.History, preferences.Particles));
-            playing = true;
-            playButton.Text = "STOP"; notice = "Cursor global ativando / Ctrl+Shift+X para parar";
+            reportedDesktopError=null;reportedDesktopWarning=null;
+            var c=Accent;
+            desktop.Play(new EffectOptions(size,lifetime,selectedRate,(byte)(c.R*255),(byte)(c.G*255),(byte)(c.B*255),true,cursorArt,trailArt,hotX,hotY,preferences.History,preferences.Particles));
+            notice="Ativando efeitos";
         }
+        UpdatePlayLabel();
         nextStatus = 0;
+    }
+
+    private void UpdatePlayLabel()
+    {
+        var state=desktop?.Playback.Snapshot;
+        playing=state?.Requested??false;
+        playButton.Text=state?.Phase switch {PlaybackPhase.Starting=>"INICIANDO",PlaybackPhase.Playing=>"STOP",PlaybackPhase.Stopping=>"PARANDO",_=>"PLAY"};
     }
 
     protected override void Update()
@@ -115,26 +123,9 @@ public partial class CursorHubGame : Game
         var viewport = InterfaceViewport.Fit(DrawWidth, DrawHeight);
         if (panel.Scale.X != viewport.Scale) { panel.Scale = new Vector2(viewport.Scale); trail.Clear(); }
         chrome?.Sync();
-        if (desktop?.Active == true)
-        {
-            if (!desktopWasActive) { notice = "Cursor e rastro globais ativos"; nextStatus = 0; }
-            desktopWasActive = true;
-        }
-        if (desktop?.Warning is { } warning && warning != reportedDesktopWarning)
-        {
-            reportedDesktopWarning = warning;
-            notice = "Rastro global ativo / cursor original mantido"; nextStatus = 0;
-        }
-        if (desktop?.Error is { } error && error != reportedDesktopError)
-        {
-            reportedDesktopError = error; playing = false; playButton.Text = "PLAY";
-            notice = "Play indisponivel: " + error; nextStatus = 0;
-        }
-        else if (playing && desktopWasActive && desktop?.Active != true)
-        {
-            playing = false; desktopWasActive = false; playButton.Text = "PLAY";
-            notice = "Cursor global parado"; nextStatus = 0;
-        }
+        UpdatePlayLabel();
+        if(desktop?.Error is {} error && error!=reportedDesktopError){reportedDesktopError=error;notice="Play: "+error;nextStatus=0;}
+        if(desktop?.Warning is {} warning && warning!=reportedDesktopWarning){reportedDesktopWarning=warning;notice="Rastro ativo / cursor original mantido";nextStatus=0;}
         var position = input?.Cursor(DrawWidth, DrawHeight);
         if (verifyPreviewPointer) position = new System.Numerics.Vector2(viewport.Left + (previewCard.X + previewCard.Width / 2) * viewport.Scale, viewport.Top + (previewCard.Y + previewCard.Height / 2) * viewport.Scale);
         if (position is { } previewPoint)
@@ -176,10 +167,12 @@ public partial class CursorHubGame : Game
             dot.Size = new Vector2(size * (input?.PixelScale ?? 1) * (0.25f + remaining * 0.65f));
             dot.Texture=LoadSkin(trailImage ?? "particle.png");
             dot.Colour = trailImage is null?Accent:Color4.White;
-            dot.Alpha = remaining * 0.65f;
+            dot.Alpha = remaining * 0.65f * Math.Min(1,(i+1)/24f);
         }
         drawnDots = visibleDots;
-        previewPlaceholder.Colour = Accent;
+        previewPlaceholder.Texture=LoadSkin(cursorImage ?? "particle.png");
+        previewPlaceholder.Size=new Vector2(size);
+        previewPlaceholder.Colour = cursorImage is null?Accent:Color4.White;
         previewPlaceholder.Alpha = position.HasValue || trail.Count > 0 ? 0 : 1;
         cursor.Alpha = enabled && position.HasValue ? 1 : 0;
         if (position is { } p)

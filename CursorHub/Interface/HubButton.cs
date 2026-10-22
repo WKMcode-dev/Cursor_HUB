@@ -30,7 +30,7 @@ public partial class HubButton : ClickableContainer
     public void SetCaptionLayout(float left, float size)
     {
         SpriteText.Anchor = SpriteText.Origin = Anchor.CentreLeft;
-        SpriteText.X = left; SpriteText.Font = new FontUsage(size: size);
+        SpriteText.X = left; SpriteText.Font = new FontUsage(family: "KodeMono", size: size);
     }
     public Color4 SkinColour { set { if (skin is not null) skin.Colour = value; } }
     public Color4 TextColour { set => SpriteText.Colour = value; }
@@ -48,7 +48,7 @@ public partial class HubButton : ClickableContainer
     protected virtual SpriteText CreateText() => new()
     {
         Anchor = Anchor.Centre, Origin = Anchor.Centre,
-        Font = new FontUsage(size: 15), Colour = DarkTheme ? new Color4(230, 236, 246, 255) : new Color4(30, 34, 43, 255)
+        Font = new FontUsage(family: "KodeMono", size: 15), Colour = DarkTheme ? new Color4(230, 236, 246, 255) : new Color4(30, 34, 43, 255)
     };
 }
 public partial class DragStrip : Container

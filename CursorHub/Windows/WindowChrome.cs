@@ -49,7 +49,7 @@ internal sealed class WindowChrome : IDisposable
     private bool minimized, maximized;
     private Rect normalBounds;
     private readonly nint handle;
-    private readonly ChromeMask mask;
+    private ChromeMask mask;
     private int width, height;
     private int left = int.MinValue, top = int.MinValue;
     private LayeredSurface? fringe;
@@ -64,6 +64,12 @@ internal sealed class WindowChrome : IDisposable
         SetWindowLong(handle, -16, GetWindowLong(handle, -16) & ~0x00CF0000);
         RemoveSystemBorder();
         SetWindowPos(handle, 0, 0, 0, 0, 0, 0x0037); // FRAMECHANGED, no move/size/activate/z-order
+    }
+
+    public void SetTheme(bool dark)
+    {
+        mask = new ChromeMask(Path.Combine(AppContext.BaseDirectory, "Assets"), dark);
+        width = height = 0;
     }
 
     private void RemoveSystemBorder()

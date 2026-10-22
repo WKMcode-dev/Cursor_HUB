@@ -19,11 +19,12 @@ public partial class CursorHubGame
     private readonly Container[] sections = new Container[5];
     private readonly HubButton[] navigation = new HubButton[5];
     private HubButton playButton = null!, economyButton = null!;
-    private readonly BindableInt rateBinding = new(60) { MinValue = 30, MaxValue = 360 };
+    private BindableInt rateBinding = new(60) { MinValue = 30, MaxValue = 360 };
     private Container previewCard = null!;
     private Sprite previewPlaceholder = null!;
-    private readonly BindableInt sizeBinding = new(18) { MinValue = 8, MaxValue = 48 };
-    private readonly BindableInt lifetimeBinding = new(180) { MinValue = 60, MaxValue = 600 };
+    private BindableInt sizeBinding = new(18) { MinValue = 8, MaxValue = 48 };
+    private BindableInt lifetimeBinding = new(180) { MinValue = 60, MaxValue = 600 };
+    private int currentSection;
     private string notice = "Configuracoes locais";
 
     private readonly Dictionary<string, Texture> skins = new();
@@ -47,10 +48,7 @@ public partial class CursorHubGame
         root.Add(new TrafficLightButton { Skin = LoadSkin("close.png"), Text = "x", Position = new Vector2(960, 35), Action = () => Exit() });
         root.Add(new TrafficLightButton { Skin = LoadSkin("minimize.png"), Text = "-", Position = new Vector2(1004, 35), Action = () => chrome?.Minimize() });
         root.Add(new TrafficLightButton { Skin = LoadSkin("maximize.png"), Text = "+", Position = new Vector2(1048, 35), Action = () => chrome?.ToggleMaximize() });
-        root.Add(new Box { Position = new Vector2(240, 36), Size = new Vector2(1, 432), Colour = new Color4(183, 186, 193, 255) });
-        // Static technical markings: no animations or per-frame asset generation.
-        for (int i = 0; i < 9; i++)
-            root.Add(new Box { Position = new Vector2(234, 246 + i * 5), Size = new Vector2(4, 2), Colour = Muted });
+        root.Add(new Sprite { Texture = LoadSkin("divider.png"), Position = new Vector2(231, 36), Size = new Vector2(10, 432), Colour = darkTheme ? new Color4(177, 194, 212, 255) : Color4.White });
         root.Add(new Sprite { Texture = LoadSkin("chain.png"), Position = new Vector2(26, 323), Size = new Vector2(185, 26) });
         string[] names = { "PRESETS", "CURSOR", "RASTRO", "DESEMPENHO", "CONFIGURACOES" };
         for (int i = 0; i < 5; i++)
@@ -63,7 +61,7 @@ public partial class CursorHubGame
             root.Add(sections[i] = new Container { Position = new Vector2(264, 100), Size = new Vector2(235, 345) });
         }
         root.Add(Label("DESKTOP PERSONALIZATION", 27, 367, 9, Muted));
-        root.Add(Label("osu!framework / v0.7.1", 27, 384, 11));
+        root.Add(Label("osu!framework / v0.8.0", 27, 384, 11));
         root.Add(Label("CTRL + SHIFT + X  /  PARAR", 27, 410, 9, Muted));
 
         sections[1].Add(Label("APARENCIA", 0, 0, 11, Muted));
@@ -138,6 +136,7 @@ public partial class CursorHubGame
     private void SelectSection(int index)
     {
 
+        currentSection = index;
         if (hotspotDialog is not null) hotspotDialog.Alpha = 0;
         if (presetMenu is not null) presetMenu.Alpha = 0;
         if (presetEditor is not null) presetEditor.Alpha = 0;
@@ -153,7 +152,7 @@ public partial class CursorHubGame
 
     private static SpriteText Label(string text, float x, float y, float size = 14, Color4? colour = null) => new()
     {
-        Text = text, Position = new Vector2(x, y), Font = new FontUsage(size: size), Colour = colour ?? (darkTheme ? new Color4(232, 238, 248, 255) : new Color4(30, 34, 43, 255))
+        Text = text, Position = new Vector2(x, y), Font = new FontUsage(family: "KodeMono", size: size), Colour = colour ?? (darkTheme ? new Color4(232, 238, 248, 255) : new Color4(30, 34, 43, 255))
     };
 
     private static HubButton MakeButton(string text, float x, float y, float width, Action action) => new()

@@ -43,11 +43,15 @@ public partial class CursorHubGame
             await Capture("01-presets");
             await OnGameThread(()=>SelectSection(4));
             await Capture("01c-settings");
+            await OnGameThread(()=> {int oldSize=size;bool old=darkTheme;ApplyTheme();if(darkTheme==old||size!=oldSize)throw new Exception("Tema nao aplicado ou perdeu tamanho");});
+            await Capture("01e-theme-live");
+            await OnGameThread(ApplyTheme);
+            results.Add("Tema alternado ao vivo e ajustes preservados");
             await OnGameThread(()=>
             {
                 _ = RasterAsset.Import(Path.Combine(AppContext.BaseDirectory,"Assets","import-test.svg"));
                 cursorImage=RasterAsset.Import(Path.Combine(AppContext.BaseDirectory,"Assets","cursor.png"));
-                cursorArt=RasterAsset.Load(cursorImage);hotX=.15f;hotY=.2f;SelectSection(1);OpenHotspot();
+                cursorImage=RasterAsset.Transform(cursorImage,45,true,false);cursorArt=RasterAsset.Load(cursorImage);hotX=.15f;hotY=.2f;SelectSection(1);OpenHotspot();
             });
             await Capture("01d-hotspot");
             await OnGameThread(()=> {hotspotDialog.Hide();cursorImage=null;cursorArt=null;hotX=hotY=.5f;});
@@ -83,6 +87,8 @@ public partial class CursorHubGame
             await OnGameThread(CheckCursorPixels);
             await OnGameThread(() => chrome!.ToggleMaximize());
             await Capture("05-maximized");
+            await OnGameThread(()=>{ApplyTheme();ApplyTheme();});
+            results.Add("Tema alternado com janela maximizada sem perder restauracao");
             await OnGameThread(CheckCursorPixels);
             await OnGameThread(() => chrome!.ToggleMaximize());
             await Capture("06-unmaximized");
