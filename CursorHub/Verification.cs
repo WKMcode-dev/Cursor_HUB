@@ -20,9 +20,15 @@ public partial class CursorHubGame
     }
     private async Task VerifyNativeInput(List<string> results)
     {
+        async Task ClickAt(float x,float y)
+        {
+            await OnGameThread(()=>UiInputProbe.Move(CursorInput.FindWindow(null,windowTitle),x,y));
+            await Task.Delay(100);await OnGameThread(UiInputProbe.Press);
+            await Task.Delay(100);await OnGameThread(UiInputProbe.Release);
+        }
         async Task Click(float x,float y,Func<bool> expected,string label)
         {
-            await OnGameThread(()=>UiInputProbe.Click(CursorInput.FindWindow(null,windowTitle),x,y));
+            await ClickAt(x,y);
             for(int i=0;i<30;i++)
             {
                 await Task.Delay(100);bool done=false;await OnGameThread(()=>done=expected());if(done){results.Add("PASS clique real: "+label);return;}
@@ -40,7 +46,7 @@ public partial class CursorHubGame
         await Click(395,419,()=>presetEditor.Alpha==0&&presets.Items.Count==1,"salvar novo preset");
         await Click(327,157,()=>presetMenu.Alpha>0,"menu do preset");
         await Click(350,136,()=>presetEditor.Alpha>0,"editar pelo menu");
-        await OnGameThread(()=>UiInputProbe.Click(CursorInput.FindWindow(null,windowTitle),520,150));await Task.Delay(150);
+        await ClickAt(520,150);await Task.Delay(150);
         await OnGameThread(()=>UiInputProbe.ReplaceText("E2E edited"));await Task.Delay(250);
         await OnGameThread(()=>{if(draftNameBox!.Text!="E2E edited")throw new Exception("Digitacao real nao chegou ao nome do preset.");});
         await Click(395,419,()=>presetEditor.Alpha==0&&presets.Items[0].Name=="E2E edited","salvar edicao e nome digitado");

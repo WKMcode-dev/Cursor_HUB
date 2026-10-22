@@ -18,14 +18,16 @@ internal static class UiInputProbe
     [DllImport("user32.dll")]private static extern bool SetCursorPos(int x,int y);
     [DllImport("user32.dll")]private static extern void mouse_event(uint flags,uint dx,uint dy,uint data,nuint extra);
     [DllImport("user32.dll",SetLastError=true)]private static extern uint SendInput(uint count,Input[] input,int size);
-    public static void Click(nint window,float x,float y)
+    public static void Move(nint window,float x,float y)
     {
         if(window==0||!GetClientRect(window,out var rect))throw new InvalidOperationException("Janela de teste indisponivel.");
         var fit=InterfaceViewport.Fit(rect.Right,rect.Bottom);
         var point=new Point{X=(int)MathF.Round(fit.Left+x*fit.Scale),Y=(int)MathF.Round(fit.Top+y*fit.Scale)};
         if(!ClientToScreen(window,ref point))throw new InvalidOperationException("Coordenadas de teste invalidas.");
-        SetForegroundWindow(window);SetCursorPos(point.X,point.Y);mouse_event(2,0,0,0,0);mouse_event(4,0,0,0,0);
+        SetForegroundWindow(window);SetCursorPos(point.X,point.Y);
     }
+    public static void Press()=>mouse_event(2,0,0,0,0);
+    public static void Release()=>mouse_event(4,0,0,0,0);
     public static void ReplaceText(string text)
     {
         var input=new List<Input>{new(){Type=1,Key=0x11},new(){Type=1,Key=0x41},new(){Type=1,Key=0x41,Flags=2},new(){Type=1,Key=0x11,Flags=2}};

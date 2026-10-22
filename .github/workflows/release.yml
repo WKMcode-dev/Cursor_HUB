@@ -53,6 +53,7 @@ jobs:
           New-Item -ItemType Directory -Force dist/Standalone | Out-Null
           Copy-Item dist/CursorHub/CursorHub.exe dist/Standalone/CursorHub.exe
           if ((Get-ChildItem dist/Standalone).Count -ne 1) { throw 'Standalone test directory must contain only the executable' }
+      # Native input is paced across update frames.
       - name: Verify packaged UI and desktop overlay
         run: |
           New-Item -ItemType Directory -Force verification | Out-Null
