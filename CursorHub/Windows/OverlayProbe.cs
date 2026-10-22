@@ -28,7 +28,7 @@ internal static class OverlayProbe
             SetThreadDpiAwarenessContext(-4);
             nint CreateTarget()
             {
-                nint target = CreateWindowEx(0x08000080, "STATIC", "CursorHub overlay probe", 0x80000000, 400, 300, 240, 180, 0, 0, 0, 0);
+                nint target = CreateWindowEx(0x08000080, "STATIC", "CursorHub overlay probe", 0x80000006, 400, 300, 240, 180, 0, 0, 0, 0);
                 if (target == 0) throw new Exception("Nao foi possivel criar a janela de verificacao.");
                 ShowWindow(target, 4);
                 var area = new Rect { Right = 240, Bottom = 180 };
@@ -65,8 +65,8 @@ internal static class OverlayProbe
             results.Add($"Worker do rastro acima de outra janela: #{trail & 255:X2}{(trail >> 8) & 255:X2}{(trail >> 16) & 255:X2}");
             if ((trail & 255) < 200 || ((trail >> 8) & 255) > 230 || ((trail >> 16) & 255) < 80)
                 throw new Exception("Rastro nao foi encontrado na composicao final.");
-            screen=GetDC(0);uint outside=GetPixel(screen,572,420);ReleaseDC(0,screen);
-            if((outside&0xFFFFFF)!=0xFFFFFF)throw new Exception("Cursor de 48px alterou rastro de 8px.");
+            screen=GetDC(0);uint outside=GetPixel(screen,568,420);ReleaseDC(0,screen);
+            if((outside&0xFFFFFF)!=0xFFFFFF)throw new Exception($"Cursor de 48px alterou rastro de 8px: pixel {outside:X8}.");
             results.Add("PASS cursor de 48px com rastro independente de 8px na composicao nativa");
             for(int i=0;i<20;i++){effects.Stop();effects.Play(new EffectOptions(48,600,60,255,0,180,false,TrailSize:8));}
             timeout.Restart();

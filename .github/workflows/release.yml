@@ -102,4 +102,4 @@ jobs:
           gh release create "v$env:RELEASE_VERSION" artifacts/* --target "$env:GITHUB_SHA" --title "Cursor Hub $env:RELEASE_VERSION - Windows portatil (x64)" --notes-file CursorHub/RELEASE_NOTES.md --prerelease
           if ($LASTEXITCODE -ne 0) { throw 'Release publication failed' }
 
-# Validates the standalone executable, complete preset editor and supplied SVG sliders.
+# Validates standalone execution, independent trail size, complete presets and SVG sliders.
