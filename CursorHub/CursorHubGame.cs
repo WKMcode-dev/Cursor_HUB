@@ -53,9 +53,9 @@ public partial class CursorHubGame : Game
         config.SetValue(FrameworkSetting.FrameSync, FrameSync.Unlimited);
         config.SetValue(FrameworkSetting.WindowMode, WindowMode.Windowed);
         config.SetValue(FrameworkSetting.WindowedSize, new System.Drawing.Size(1320, 600));
-        Fonts.AddStore(new osu.Framework.IO.Stores.GlyphStore(
+        Fonts.AddStore(new osu.Framework.IO.Stores.FontStore(Host.Renderer,new osu.Framework.IO.Stores.GlyphStore(
             new osu.Framework.IO.Stores.ResourceStore<byte[]>(new osu.Framework.IO.Stores.StorageBackedResourceStore(
-                new osu.Framework.Platform.NativeStorage(Path.Combine(AppContext.BaseDirectory,"Assets")))), "Fonts/KodeMono"));
+                new osu.Framework.Platform.NativeStorage(Path.Combine(AppContext.BaseDirectory,"Assets")))), "Fonts/KodeMono"), scaleAdjust:48));
         var saved = HubSettings.Load();
         darkTheme=ForceDarkVerification || preferences.DarkTheme;HubButton.DarkTheme=darkTheme;HubButton.Animations=preferences.Animations;
         cursorImage=saved.CursorImage;trailImage=saved.TrailImage;hotX=Math.Clamp(saved.HotX,0,1);hotY=Math.Clamp(saved.HotY,0,1);
@@ -167,7 +167,7 @@ public partial class CursorHubGame : Game
             dot.Size = new Vector2(size * (input?.PixelScale ?? 1) * (0.25f + remaining * 0.65f));
             dot.Texture=LoadSkin(trailImage ?? "particle.png");
             dot.Colour = trailImage is null?Accent:Color4.White;
-            dot.Alpha = remaining * 0.65f * Math.Min(1,(i+1)/24f);
+            dot.Alpha = remaining * 0.65f * (1-Math.Clamp((visibleDots-preferences.Particles+24)/24f,0,1)*(1-Math.Min(1,(i+1)/24f)));
         }
         drawnDots = visibleDots;
         previewPlaceholder.Texture=LoadSkin(cursorImage ?? "particle.png");

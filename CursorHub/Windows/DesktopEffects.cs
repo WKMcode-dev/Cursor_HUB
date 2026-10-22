@@ -129,9 +129,9 @@ internal sealed class DesktopEffects : IDisposable
                         {
                             var sample = trail[i];
                             float remaining = Math.Clamp(1 - (float)((frameStart - sample.Born) / settings.Lifetime), 0, 1);
-                            if(settings.TrailArt is {} art) LayeredSurface.Stamp(pixels, surface.Stride,width,height,sample.Position.X-left,sample.Position.Y-top,settings.Size*(.25f+remaining*.65f),art,remaining*.65f*Math.Min(1,(i+1)/24f));
+                            if(settings.TrailArt is {} art) LayeredSurface.Stamp(pixels, surface.Stride,width,height,sample.Position.X-left,sample.Position.Y-top,settings.Size*(.25f+remaining*.65f),art,remaining*.65f*(1-Math.Clamp((trail.Count-trail.Capacity+24)/24f,0,1)*(1-Math.Min(1,(i+1)/24f))));
                             else LayeredSurface.Circle(pixels, surface.Stride, width, height,
-                                sample.Position.X - left, sample.Position.Y - top, settings.Size * (.125f + remaining * .325f), settings.R, settings.G, settings.B, remaining * .65f * Math.Min(1,(i+1)/24f));
+                                sample.Position.X - left, sample.Position.Y - top, settings.Size * (.125f + remaining * .325f), settings.R, settings.G, settings.B, remaining * .65f * (1-Math.Clamp((trail.Count-trail.Capacity+24)/24f,0,1)*(1-Math.Min(1,(i+1)/24f))));
                         }
                         surface.Present(left, top, width, height); visible = true;
                         Interlocked.Increment(ref frames);
@@ -143,9 +143,7 @@ internal sealed class DesktopEffects : IDisposable
                 }
                 catch (Exception exception)
                 {
-                    Volatile.Write(ref details, exception.ToString());
-                    Volatile.Write(ref error, exception.Message);
-                    lock(requestGate){if(Playback.Snapshot.Revision==revision){Volatile.Write(ref requested,null);Playback.Fail(revision);}}
+                    lock(requestGate){if(Playback.Snapshot.Revision==revision){Volatile.Write(ref details,exception.ToString());Volatile.Write(ref error,exception.Message);Volatile.Write(ref requested,null);Playback.Fail(revision);}}
                     cursors.Restore(); surface.Hide(); applied = null; active = false;
                 }
             }
