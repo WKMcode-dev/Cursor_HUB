@@ -10,6 +10,7 @@ internal static class Program
     [STAThread]
     private static void Main(string[] args)
     {
+        if(args.Length==2 && args[0]=="--verify-picker"){Windows.PickerProbe.Run(Path.GetFullPath(args[1]));return;}
         if (args.Length == 2 && args[0] == "--verify-overlay") { Windows.OverlayProbe.Run(Path.GetFullPath(args[1])); return; }
         if (args.Length == 3 && args[0] == "--cursor-guard" && int.TryParse(args[1], out int parent))
         {

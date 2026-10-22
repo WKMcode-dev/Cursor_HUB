@@ -56,6 +56,11 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force verification | Out-Null
           $output = Join-Path $pwd 'verification'
+          $picker = Start-Process dist/CursorHub/CursorHub.exe -ArgumentList "--verify-picker `"$output/picker`"" -PassThru
+          if (!$picker.WaitForExit(30000)) { $picker.Kill(); throw 'File picker verification timed out' }
+          $pickerResults = Get-Content "$output/picker/picker-results.json" -Raw
+          Write-Output $pickerResults
+          if ($pickerResults -match 'FAIL' -or $pickerResults -notmatch 'thread MTA') { throw 'File picker verification failed' }
           $probe = Start-Process dist/CursorHub/CursorHub.exe -ArgumentList "--verify-overlay `"$output/overlay`"" -PassThru
           if (!$probe.WaitForExit(30000)) { $probe.Kill(); throw 'Overlay verification timed out' }
           $overlay = Get-Content "$output/overlay/overlay-results.json" -Raw

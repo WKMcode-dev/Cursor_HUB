@@ -45,9 +45,9 @@ public partial class CursorHubGame
         root.Add(Label("CHARACTER CHAIN   /   01", 27, 73, 9, Muted));
         root.Add(Label("DEMONSTRACAO AO VIVO", 800, 83, 10, Orange));
 
-        root.Add(new TrafficLightButton { Skin = LoadSkin("close.png"), Text = "x", Position = new Vector2(960, 35), Action = () => Exit() });
-        root.Add(new TrafficLightButton { Skin = LoadSkin("minimize.png"), Text = "-", Position = new Vector2(1004, 35), Action = () => chrome?.Minimize() });
-        root.Add(new TrafficLightButton { Skin = LoadSkin("maximize.png"), Text = "+", Position = new Vector2(1048, 35), Action = () => chrome?.ToggleMaximize() });
+        root.Add(new TrafficLightButton { Skin = LoadSkin("close.png"), Text = "", Position = new Vector2(960, 35), Action = () => Exit() });
+        root.Add(new TrafficLightButton { Skin = LoadSkin("minimize.png"), Text = "", Position = new Vector2(1004, 35), Action = () => chrome?.Minimize() });
+        root.Add(new TrafficLightButton { Skin = LoadSkin("maximize.png"), Text = "", Position = new Vector2(1048, 35), Action = () => chrome?.ToggleMaximize() });
         root.Add(new Sprite { Texture = LoadSkin("divider.png"), Position = new Vector2(231, 36), Size = new Vector2(10, 432), Colour = darkTheme ? new Color4(177, 194, 212, 255) : Color4.White });
         root.Add(new Sprite { Texture = LoadSkin("chain.png"), Position = new Vector2(26, 323), Size = new Vector2(185, 26) });
         string[] names = { "PRESETS", "CURSOR", "RASTRO", "DESEMPENHO", "CONFIGURACOES" };
@@ -61,7 +61,7 @@ public partial class CursorHubGame
             root.Add(sections[i] = new Container { Position = new Vector2(264, 100), Size = new Vector2(235, 345) });
         }
         root.Add(Label("DESKTOP PERSONALIZATION", 27, 367, 9, Muted));
-        root.Add(Label("osu!framework / v0.8.1", 27, 384, 11));
+        root.Add(Label("osu!framework / v0.8.2", 27, 384, 11));
         root.Add(Label("CTRL + SHIFT + X  /  PARAR", 27, 410, 9, Muted));
 
         sections[1].Add(Label("APARENCIA", 0, 0, 11, Muted));

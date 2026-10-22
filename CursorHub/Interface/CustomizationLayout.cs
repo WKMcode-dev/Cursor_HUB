@@ -54,16 +54,28 @@ public partial class CursorHubGame
     {
         try{preferences.Save();notice="Preferencias salvas";}catch(Exception e){notice=e.Message;}nextStatus=0;
     }
-    private void ImportImage(bool isTrail)
+    private bool importingImage;
+    private async void ImportImage(bool isTrail)
     {
+        if(importingImage)return;
+        importingImage=true;
         try
         {
-            string? source=AssetPicker.Pick(CursorInput.FindWindow(null,windowTitle));if(source is null)return;
-            string path=RasterAsset.Import(source);var art=RasterAsset.Load(path);_ = LoadSkin(path);
-            if(isTrail){trailImage=path;trailArt=art;}else{cursorImage=path;cursorArt=art;hotX=hotY=.5f;OpenHotspot();}
-            trail.Clear();notice="Imagem importada. Salve os ajustes ou um preset.";nextStatus=0;
+            nint owner=CursorInput.FindWindow(null,windowTitle);
+            string? source=await AssetPicker.PickAsync(owner);
+            if(source is null)return;
+            string path=await Task.Run(()=>RasterAsset.Import(source));
+            var art=await Task.Run(()=>RasterAsset.Load(path));
+            await OnGameThread(()=>
+            {
+                _=LoadSkin(path);
+                if(isTrail){trailImage=path;trailArt=art;}
+                else{cursorImage=path;cursorArt=art;hotX=hotY=.5f;OpenHotspot();}
+                trail.Clear();notice="Imagem importada. Salve os ajustes ou um preset.";nextStatus=0;
+            });
         }
-        catch(Exception e){notice="Importacao: "+e.Message;nextStatus=0;}
+        catch(Exception e){await OnGameThread(()=>{notice="Importacao: "+e.Message;nextStatus=0;});}
+        finally{await OnGameThread(()=>importingImage=false);}
     }
     private void OpenHotspot()
     {

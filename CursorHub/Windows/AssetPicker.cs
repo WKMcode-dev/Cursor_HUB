@@ -10,9 +10,35 @@ internal static class AssetPicker
         public uint Flags; public ushort Offset, Extension; public string? DefaultExtension; public nint Data, Hook; public string? Template; public nint Reserved; public uint Reserved2, FlagsEx;
     }
     [DllImport("comdlg32.dll", CharSet = CharSet.Unicode)] private static extern bool GetOpenFileName(ref OpenFile file);
-    public static string? Pick(nint owner)
+    [DllImport("comdlg32.dll")] private static extern uint CommDlgExtendedError();
+    [DllImport("ole32.dll")] private static extern int OleInitialize(nint reserved);
+    [DllImport("ole32.dll")] private static extern void OleUninitialize();
+    [DllImport("kernel32.dll")] private static extern uint GetCurrentThreadId();
+
+    public static Task<string?> PickAsync(nint owner, Action<uint>? ready = null)
+    {
+        var completion=new TaskCompletionSource<string?>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var thread=new Thread(()=>
+        {
+            bool initialized=false;
+            try
+            {
+                Marshal.ThrowExceptionForHR(OleInitialize(0));initialized=true;
+                ready?.Invoke(GetCurrentThreadId());
+                completion.SetResult(Pick(owner));
+            }
+            catch(Exception e){completion.SetException(e);}
+            finally{if(initialized)OleUninitialize();}
+        }){IsBackground=true,Name="CursorHub file picker (STA)"};
+        thread.SetApartmentState(ApartmentState.STA);thread.Start();
+        return completion.Task;
+    }
+    private static string? Pick(nint owner)
     {
         var of = new OpenFile { Size = Marshal.SizeOf<OpenFile>(), Owner = owner, File = new StringBuilder(32768), MaxFile = 32768, Filter = "Imagens PNG ou SVG\0*.png;*.svg\0\0", Title = "Importar cursor ou rastro", Flags = 0x00080000 | 0x00001000 | 0x00000800 | 0x00000008 };
-        return GetOpenFileName(ref of) ? of.File.ToString() : null;
+        if(GetOpenFileName(ref of))return of.File.ToString();
+        uint error=CommDlgExtendedError();
+        if(error!=0)throw new InvalidOperationException($"Windows nao abriu o seletor de imagens (0x{error:X}).");
+        return null; // Cancel is distinct from a native dialog failure.
     }
 }
