@@ -44,8 +44,12 @@ internal static class PickerProbe
     internal static async Task CompleteImage(Func<uint> thread,string path)
     {
         nint dialog=await WaitForDialog(thread);
-        // CDM_SETCONTROLTEXT and edt1 from the Windows SDK common-dialog headers.
-        SendMessage(dialog,0x0468,0x0480,path);await Task.Delay(150);
+        // The Explorer dialog uses cmb13 for the file name; classic dialogs use edt1.
+        await Task.Delay(500);
+        nint fileName=GetDlgItem(dialog,0x047C);
+        if(fileName==0)fileName=GetDlgItem(dialog,0x0480);
+        if(fileName==0)throw new Exception("Campo de nome de arquivo nao encontrado no seletor.");
+        SendMessage(fileName,0x000C,0,path);await Task.Delay(200);
         PostMessage(dialog,0x0111,1,0);
     }
     public static void Run(string directory)
