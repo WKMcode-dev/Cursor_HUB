@@ -39,7 +39,7 @@ public partial class CursorHubGame : Game
     private int drawnDots;
     private int selectedRate = 60, size = 18, trailSize = 18, trailColourIndex, lifetime = 180, colourIndex;
     private readonly Color4[] palette = { new(44, 137, 157, 255), new(206, 93, 163, 255), new(124, 105, 183, 255), new(37, 43, 55, 255) };
-    private Color4 Accent => palette[colourIndex];
+    private Color4 Accent => ResolveColour(colourIndex,cursorRgb);
 
     public override void SetHost(osu.Framework.Platform.GameHost host)
     {
@@ -62,6 +62,7 @@ public partial class CursorHubGame : Game
         cursorImage=saved.CursorImage;trailImage=saved.TrailImage;hotX=Math.Clamp(saved.HotX,0,1);hotY=Math.Clamp(saved.HotY,0,1);
         try{cursorArt=cursorImage is null?null:RasterAsset.Load(cursorImage);trailArt=trailImage is null?null:RasterAsset.Load(trailImage);}catch{cursorImage=trailImage=null;cursorArt=trailArt=null;}
         size = saved.Size; lifetime = saved.Lifetime; selectedRate = saved.Rate;
+        cursorRgb=CursorHub.Core.ColourValue.Valid(saved.CursorRgb);trailRgb=CursorHub.Core.ColourValue.Valid(saved.TrailRgb);
         trailSize=saved.ResolvedTrailSize;trailColourIndex=saved.ResolvedTrailColour;
         colourIndex = saved.Colour; economy = saved.Economy;
         Add(background = new Box { RelativeSizeAxes = Axes.Both, Colour = Color4.Black });
@@ -104,7 +105,7 @@ public partial class CursorHubGame : Game
         {
             reportedDesktopError=null;reportedDesktopWarning=null;
             var c=Accent;
-            desktop.Play(new EffectOptions(size,lifetime,selectedRate,(byte)(c.R*255),(byte)(c.G*255),(byte)(c.B*255),true,cursorArt,trailArt,hotX,hotY,preferences.History,preferences.Particles,trailSize,(byte)(palette[trailColourIndex].R*255),(byte)(palette[trailColourIndex].G*255),(byte)(palette[trailColourIndex].B*255)));
+            desktop.Play(new EffectOptions(size,lifetime,selectedRate,(byte)MathF.Round(c.R*255),(byte)MathF.Round(c.G*255),(byte)MathF.Round(c.B*255),true,cursorArt,trailArt,hotX,hotY,preferences.History,preferences.Particles,trailSize,(byte)MathF.Round(TrailAccent.R*255),(byte)MathF.Round(TrailAccent.G*255),(byte)MathF.Round(TrailAccent.B*255)));
             notice="Ativando efeitos";
         }
         UpdatePlayLabel();
@@ -168,7 +169,7 @@ public partial class CursorHubGame : Game
             dot.Position = new Vector2(sample.Position.X, sample.Position.Y);
             dot.Size = new Vector2(trailSize * (input?.PixelScale ?? 1) * (0.25f + remaining * 0.65f));
             dot.Texture=LoadSkin(trailImage ?? "particle.png");
-            dot.Colour = trailImage is null?palette[trailColourIndex]:Color4.White;
+            dot.Colour = trailImage is null?TrailAccent:Color4.White;
             dot.Alpha = remaining * 0.65f * (1-Math.Clamp((visibleDots-preferences.Particles+24)/24f,0,1)*(1-Math.Min(1,(i+1)/24f)));
         }
         drawnDots = visibleDots;

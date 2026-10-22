@@ -19,9 +19,9 @@ public partial class CursorHubGame
     {
         sections[1].Add(MakeButton("IMPORTAR CURSOR PNG / SVG",0,224,235,()=>ImportImage(false)));
         sections[1].Add(MakeButton("EDITAR HOTSPOT",0,264,235,OpenHotspot));
-        sections[1].Add(MakeButton("CURSOR CIRCULAR",0,304,235,()=>{cursorImage=null;cursorArt=null;hotX=hotY=.5f;notice="Cursor circular selecionado";}));
+        sections[1].Add(MakeButton("CURSOR CIRCULAR",0,304,235,()=>{cursorImage=null;cursorArt=null;hotX=hotY=.5f;RefreshColourControls();notice="Cursor circular selecionado";}));
         sections[2].Add(MakeButton("IMPORTAR RASTRO PNG / SVG",0,267,235,()=>ImportImage(true)));
-        sections[2].Add(MakeButton("CIRCULAR",0,307,112,()=>{trailImage=null;trailArt=null;notice="Rastro circular selecionado";}));
+        sections[2].Add(MakeButton("CIRCULAR",0,307,112,()=>{trailImage=null;trailArt=null;RefreshColourControls();notice="Rastro circular selecionado";}));
         sections[2].Add(MakeButton("EDITAR IMAGEM",120,307,115,()=>OpenImageEditor(CurrentSettings(),true,ApplyWorkspaceSettings)));
         hotspotDialog=new Container { Position=new Vector2(270,86),Size=new Vector2(500,340),Alpha=0,Depth=-60 };root.Add(hotspotDialog);
         var page=sections[4];
@@ -60,6 +60,7 @@ public partial class CursorHubGame
     private void ImportImage(bool isTrail)=>ChooseImage((path,art)=>
     {
         if(isTrail){trailImage=path;trailArt=art;}else{cursorImage=path;cursorArt=art;hotX=hotY=.5f;}
+        RefreshColourControls();
         OpenImageEditor(CurrentSettings(),isTrail,ApplyWorkspaceSettings);
         trail.Clear();notice="Imagem importada. Salve os ajustes ou o preset.";nextStatus=0;
     });

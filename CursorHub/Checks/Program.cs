@@ -162,3 +162,21 @@ Check(resized.ResolvedTrailSize==36&&resized.ResolvedTrailColour==2,"cursor nao 
 var independent=new CursorHub.Interface.HubSettings(Size:48,TrailSize:8,TrailColour:1,Colour:2,HotX:.2f,HotY:.9f,CursorImage:"cursor.png",TrailImage:"trail.png");
 Check(System.Text.Json.JsonSerializer.Deserialize<CursorHub.Interface.HubSettings>(System.Text.Json.JsonSerializer.Serialize(independent))==independent,"persistencia completa dos campos independentes");
 Console.WriteLine("PASS migracao e independencia de cursor/rastro");
+
+foreach(uint rgb in new uint[]{0,0xFFFFFF,0x12ABEF,0xFF0000,0x00FF00,0x0000FF})
+    Check(ColourValue.FromColorRef(ColourValue.ToColorRef(rgb))==rgb,"seletor preserva canais RGB");
+Check(ColourValue.Valid(0x1000000) is null,"RGB invalido usa paleta padrao");
+foreach(int count in new[]{0,1,6,23,24,25,47,48,127,128})
+{
+    int pages=PresetPagination.PageCount(count),total=0,add=0;
+    for(int page=0;page<pages;page++)
+    {
+        int entries=Math.Clamp(count-page*24,0,24);bool hasAdd=PresetPagination.HasAdd(count,page);
+        Check(entries+(hasAdd?1:0)<=24,"pagina nao transborda");total+=entries;if(hasAdd)add++;
+    }
+    Check(total==count&&add==(count<128?1:0),"colecao mostra somente presets e um novo");
+    Check(PresetPagination.ClampPage(count,999)==pages-1,"pagina removida nao fica vazia");
+}
+var rgbSettings=independent with{CursorRgb=0x12ABEF,TrailRgb=0xEF7012};
+Check(System.Text.Json.JsonSerializer.Deserialize<CursorHub.Interface.HubSettings>(System.Text.Json.JsonSerializer.Serialize(rgbSettings))==rgbSettings,"cores personalizadas persistem independentemente");
+Console.WriteLine("PASS RGB e limites de paginacao");

@@ -26,9 +26,11 @@ public partial class CursorHubGame
         sections[0].Position = new Vector2(264, 100);
         sections[0].Size = new Vector2(512, 344);
         sections[0].Add(presetRows = new Container { Size = new Vector2(512, 318) });
-        var previous = MakeButton("<", 0, 324, 28, () => { presetPage = Math.Max(0, presetPage - 1); RefreshPresets(); });
-        var next = MakeButton(">", 34, 324, 28, () => { presetPage = Math.Min(Math.Max(0, (presets.Items.Count) / PresetsPerPage), presetPage + 1); RefreshPresets(); });
+        var previous = MakeButton("", 0, 324, 28, () => { presetPage = Math.Max(0, presetPage - 1); RefreshPresets(); });
+        var next = MakeButton("", 34, 324, 28, () => { presetPage = Math.Min(Math.Max(0, (presets.Items.Count) / PresetsPerPage), presetPage + 1); RefreshPresets(); });
         previous.Height = next.Height = 20;
+        previous.Add(new Sprite {Texture=LoadSkin("page-previous.png"),RelativeSizeAxes=Axes.Both,Size=Vector2.One,Colour=Muted});
+        next.Add(new Sprite {Texture=LoadSkin("page-next.png"),RelativeSizeAxes=Axes.Both,Size=Vector2.One,Colour=Muted});
         sections[0].Add(previous); sections[0].Add(next);
         sections[0].Add(presetCounter = Label("", 74, 329, 9, Muted));
         root.Add(presetMenu = new Container { Size = new Vector2(23.0625f, 72), Alpha = 0, Depth = -40 });
@@ -40,11 +42,11 @@ public partial class CursorHubGame
     {
         presetMenu.Alpha = 0;
         presetRows.Clear();
-        int pages = Math.Max(1, (presets.Items.Count + 1 + PresetsPerPage - 1) / PresetsPerPage);
+        int pages = CursorHub.Core.PresetPagination.PageCount(presets.Items.Count);
         presetPage = Math.Clamp(presetPage, 0, pages - 1);
         presetCounter.Text = $"{presets.Items.Count} PRESETS   /   {presetPage + 1:00} - {pages:00}";
         var page = presets.Items.Skip(presetPage * PresetsPerPage).Take(PresetsPerPage).ToArray();
-        for (int cell = 0; cell < PresetsPerPage; cell++)
+        for (int cell = 0; cell < page.Length+(CursorHub.Core.PresetPagination.HasAdd(presets.Items.Count,presetPage)?1:0); cell++)
         {
             float x = (cell % 6) * 85, y = (cell / 6) * 82;
             if (cell < page.Length)
@@ -57,17 +59,16 @@ public partial class CursorHubGame
                 button.SkinColour = preset.Id == demonstratedPreset ? new Color4(221, 241, 243, 255) : Color4.White;
                 card.Add(button);
                 var cfg=preset.Settings;
-                var colour=palette[Math.Clamp(cfg.Colour,0,palette.Length-1)];
-                string Existing(string? path)=>path is not null && File.Exists(path)?path:"particle.png";
+                var colour=ResolveColour(cfg.Colour,cfg.CursorRgb);
                 float diameter=8+(Math.Clamp(cfg.Size,8,48)-8)*.45f;
                 float trailDiameter=8+(cfg.ResolvedTrailSize-8)*.45f;
-                var trailColour=palette[cfg.ResolvedTrailColour];
+                var trailColour=ResolveColour(cfg.ResolvedTrailColour,cfg.TrailRgb);
                 for(int t=0;t<4;t++)
                 {
                     float amount=(t+1)/5f;
-                    card.Add(new Sprite {Texture=LoadSkin(Existing(cfg.TrailImage)),Position=new Vector2(14+t*7,36-t*4),Origin=Anchor.Centre,Size=new Vector2(trailDiameter*(.25f+.65f*amount)),Colour=cfg.TrailImage is null?trailColour:Color4.White,Alpha=amount*.65f});
+                    card.Add(new Sprite {Texture=UserImage(cfg.TrailImage),Position=new Vector2(14+t*7,36-t*4),Origin=Anchor.Centre,Size=new Vector2(trailDiameter*(.25f+.65f*amount)),Colour=cfg.TrailImage is null?trailColour:Color4.White,Alpha=amount*.65f});
                 }
-                card.Add(new Sprite {Texture=LoadSkin(Existing(cfg.CursorImage)),Position=new Vector2(43,19),Origin=Anchor.Centre,Size=new Vector2(diameter),Colour=cfg.CursorImage is null?colour:Color4.White});
+                card.Add(new Sprite {Texture=UserImage(cfg.CursorImage),Position=new Vector2(43,19),Origin=Anchor.Centre,Size=new Vector2(diameter),Colour=cfg.CursorImage is null?colour:Color4.White});
                 var name = preset.Name.Length > 9 ? preset.Name[..8] + ".." : preset.Name;
                 card.Add(Label(name, 6, 57, 8));
                 int selectedCell = cell;
@@ -120,7 +121,7 @@ public partial class CursorHubGame
         presetMenu.Alpha = 1;
     }
 
-    private HubSettings CurrentSettings() => new(size, lifetime, selectedRate, colourIndex, economy, cursorImage, trailImage, hotX, hotY, trailSize, trailColourIndex);
+    private HubSettings CurrentSettings() => new(size, lifetime, selectedRate, colourIndex, economy, cursorImage, trailImage, hotX, hotY, trailSize, trailColourIndex,cursorRgb,trailRgb);
 
     private void Demonstrate(CursorPreset preset)
     {
@@ -134,6 +135,7 @@ public partial class CursorHubGame
         cursorImage=s.CursorImage;trailImage=s.TrailImage;hotX=Math.Clamp(s.HotX,0,1);hotY=Math.Clamp(s.HotY,0,1);
         try{cursorArt=cursorImage is null?null:RasterAsset.Load(cursorImage);}catch{cursorImage=null;cursorArt=null;}
         try{trailArt=trailImage is null?null:RasterAsset.Load(trailImage);}catch{trailImage=null;trailArt=null;}
+        cursorRgb=CursorHub.Core.ColourValue.Valid(s.CursorRgb);trailRgb=CursorHub.Core.ColourValue.Valid(s.TrailRgb);RefreshColourControls();
         sizeBinding.Value=Math.Clamp(s.Size,8,48);trailSizeBinding.Value=s.ResolvedTrailSize;
         lifetimeBinding.Value=Math.Clamp(s.Lifetime,60,600);colourIndex=Math.Clamp(s.Colour,0,3);trailColourIndex=s.ResolvedTrailColour;
         rateBinding.Value=Math.Clamp(s.Rate,30,360);economy=s.Economy;UpdateEconomyLabel();trail.Clear();ApplyRate();
@@ -144,9 +146,17 @@ public partial class CursorHubGame
     private string draftName="";
     private HubTextBox? draftNameBox;
     private int editorTab;
+    private long presetEditRevision;
+    private void ClosePresetEditor(){presetEditRevision++;presetEditor.Hide();if(hotspotDialog is not null)hotspotDialog.Hide();}
+    private void AcceptPresetImage(long revision,bool isTrail,string path)
+    {
+        if(revision!=presetEditRevision||presetEditor.Alpha==0)return;
+        presetDraft=isTrail?presetDraft with{TrailImage=path}:presetDraft with{CursorImage=path,HotX=.5f,HotY=.5f};
+        RenderPresetEditor();OpenImageEditor(presetDraft,isTrail,result=>{if(revision!=presetEditRevision||presetEditor.Alpha==0)return;presetDraft=result;RenderPresetEditor();});
+    }
     private void OpenPresetEditor(CursorPreset? existing)
     {
-        presetMenu.Hide();editingPresetId=existing?.Id;var original=existing?.Settings??CurrentSettings();presetDraft=original with{TrailSize=original.ResolvedTrailSize,TrailColour=original.ResolvedTrailColour};
+        presetEditRevision++;presetMenu.Hide();editingPresetId=existing?.Id;var original=existing?.Settings??CurrentSettings();presetDraft=original with{TrailSize=original.ResolvedTrailSize,TrailColour=original.ResolvedTrailColour};
         draftName=existing?.Name??$"Preset {presets.Items.Count+1}";draftNameBox=null;editorTab=0;
         RenderPresetEditor();presetEditor.Show();
     }
@@ -163,21 +173,29 @@ public partial class CursorHubGame
         {
             bool isTrail=editorTab==1;
             AddSlider(options,isTrail?"Tamanho do rastro":"Tamanho do cursor",0,isTrail?presetDraft.ResolvedTrailSize:presetDraft.Size,8,48,v=>presetDraft=isTrail?presetDraft with{TrailSize=v}:presetDraft with{Size=v},"px");
-            for(int i=0;i<palette.Length;i++){int colour=i;var swatch=MakeButton("",260,i*39,44,()=>presetDraft=isTrail?presetDraft with{TrailColour=colour}:presetDraft with{Colour=colour});swatch.BackgroundColour=palette[i];swatch.Height=30;options.Add(swatch);}
-            options.Add(Label("COR",324,5,10,Muted));
+            string? image=isTrail?presetDraft.TrailImage:presetDraft.CursorImage;
+            if(image is null)
+            {
+                for(int i=0;i<palette.Length;i++){int colour=i;var swatch=MakeButton("",260,i*33,38,()=>{presetDraft=isTrail?presetDraft with{TrailColour=colour,TrailRgb=null}:presetDraft with{Colour=colour,CursorRgb=null};RenderPresetEditor();});swatch.BackgroundColour=palette[i];swatch.Height=26;options.Add(swatch);}
+                options.Add(MakeButton("OUTRA COR",260,140,200,()=>
+                {
+                    long revision=presetEditRevision;
+                    ChooseColour(Rgb(ResolveColour(isTrail?presetDraft.ResolvedTrailColour:presetDraft.Colour,isTrail?presetDraft.TrailRgb:presetDraft.CursorRgb)),value=>
+                    {
+                        if(revision!=presetEditRevision||presetEditor.Alpha==0)return;
+                        presetDraft=isTrail?presetDraft with{TrailRgb=value}:presetDraft with{CursorRgb=value};RenderPresetEditor();
+                    });
+                }));
+            }
             options.Add(MakeButton("IMPORTAR PNG / SVG",0,96,230,()=>
             {
                 draftName=draftNameBox.Text;
-                ChooseImage((path,_)=>
-                {
-                    presetDraft=isTrail?presetDraft with{TrailImage=path}:presetDraft with{CursorImage=path,HotX=.5f,HotY=.5f};
-                    OpenImageEditor(presetDraft,isTrail,result=>{presetDraft=result;RenderPresetEditor();});
-                });
+                long revision=presetEditRevision;
+                ChooseImage((path,_)=>AcceptPresetImage(revision,isTrail,path));
             }));
             options.Add(MakeButton(isTrail?"EDITAR IMAGEM":"IMAGEM / HOTSPOT",0,138,230,()=>OpenImageEditor(presetDraft,isTrail,result=>{presetDraft=result;RenderPresetEditor();})));
             options.Add(MakeButton("FORMATO CIRCULAR",0,180,230,()=>{presetDraft=isTrail?presetDraft with{TrailImage=null}:presetDraft with{CursorImage=null,HotX=.5f,HotY=.5f};RenderPresetEditor();}));
-            string? image=isTrail?presetDraft.TrailImage:presetDraft.CursorImage;
-            options.Add(new Sprite {Texture=LoadSkin(image is not null&&File.Exists(image)?image:"particle.png"),Position=new Vector2(330,43),Size=new Vector2(100),Colour=image is null?palette[isTrail?presetDraft.ResolvedTrailColour:Math.Clamp(presetDraft.Colour,0,3)]:Color4.White});
+            options.Add(new Sprite {Texture=UserImage(image),Position=new Vector2(330,43),Size=new Vector2(100),Colour=image is null?ResolveColour(isTrail?presetDraft.ResolvedTrailColour:presetDraft.Colour,isTrail?presetDraft.TrailRgb:presetDraft.CursorRgb):Color4.White});
         }
         else
         {
@@ -187,7 +205,7 @@ public partial class CursorHubGame
             economy.Action=()=>{presetDraft=presetDraft with{Economy=!presetDraft.Economy};economy.Text="Economia: "+(presetDraft.Economy?"ligada":"desligada");};options.Add(economy);
         }
         presetEditor.Add(MakeButton("SALVAR PRESET",16,318,230,CommitPresetEditor));
-        presetEditor.Add(MakeButton("CANCELAR",266,318,230,()=>{presetEditor.Hide();hotspotDialog.Hide();}));
+        presetEditor.Add(MakeButton("CANCELAR",266,318,230,ClosePresetEditor));
     }
     private void CommitPresetEditor()
     {
@@ -197,7 +215,7 @@ public partial class CursorHubGame
             var preset=new CursorPreset(editingPresetId??Guid.NewGuid(),draftName,presetDraft);
             presets.Put(preset);demonstratedPreset=preset.Id;ApplyWorkspaceSettings(presetDraft);
             presetPage=Math.Max(0,presets.Items.FindIndex(p=>p.Id==preset.Id)/PresetsPerPage);
-            presetEditor.Hide();hotspotDialog.Hide();RefreshPresets();notice="Preset e miniatura atualizados";nextStatus=0;
+            ClosePresetEditor();RefreshPresets();notice="Preset e miniatura atualizados";nextStatus=0;
         }
         catch(Exception e){notice=e.Message;nextStatus=0;}
     }

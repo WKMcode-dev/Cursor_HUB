@@ -1,10 +1,10 @@
-# Cursor Hub 0.9.0
+# Cursor Hub 0.10.0
 
 Aplicativo Windows x64 em C#/.NET 10 e osu!framework, com interface Kode Mono e assets SVG.
 
 ## Executavel unico
 
-Baixe `CursorHub-0.9.0-win-x64.exe` na release. Pode mover somente esse arquivo para outra pasta ou para a area de trabalho. Ele inclui o runtime e as bibliotecas; os arquivos de apoio sao preparados automaticamente no perfil do usuario. Nao exige .NET ou Visual Studio instalados. Feche qualquer versao anterior antes de iniciar.
+Baixe `CursorHub-0.10.0-win-x64.exe` na release. Pode mover somente esse arquivo para outra pasta ou para a area de trabalho. Ele inclui o runtime e as bibliotecas; os arquivos de apoio sao preparados automaticamente no perfil do usuario. Nao exige .NET ou Visual Studio instalados. Feche qualquer versao anterior antes de iniciar.
 
 Presets, configuracoes e imagens importadas ficam em `%LOCALAPPDATA%\CursorHub`, portanto mover o executavel nao apaga os ajustes. Para transferir a colecao a outro computador, copie tambem esses dados.
 
@@ -12,7 +12,9 @@ Presets, configuracoes e imagens importadas ficam em `%LOCALAPPDATA%\CursorHub`,
 
 CURSOR e RASTRO tem tamanhos e cores independentes. Cada um aceita PNG/SVG ou formato circular. O editor de imagens permite giro em passos de 15 graus e inversao horizontal/vertical. No cursor, clique ou arraste a mira para selecionar o hotspot. As imagens mantem sua propria cor; a paleta se aplica ao formato circular.
 
-No menu de tres pontos do preset, EDITAR abre abas CURSOR, RASTRO e AJUSTES. Edite nome, imagens, tamanhos, cores, hotspot, duracao, Hz e economia; SALVAR PRESET persiste todos os campos e atualiza a miniatura. CANCELAR descarta as mudancas do editor. Os controles de tamanho, duracao e Hz usam o `slide_adjust.svg` fornecido, com bolinha e preenchimento dinamicos.
+No menu de tres pontos do preset, EDITAR abre abas CURSOR, RASTRO e AJUSTES. Edite nome, imagens, tamanhos, cores, hotspot, duracao, Hz e economia; SALVAR PRESET persiste todos os campos e atualiza a miniatura. CANCELAR descarta as mudancas do editor. As cores podem vir da paleta padrao ou do seletor RGB nativo. Os controles de cor aparecem apenas no formato circular; PNG/SVG preservam as cores da imagem. A galeria mostra somente os presets salvos e um card NOVO, sem placeholders vazios.
+
+Os controles de tamanho, duracao e Hz usam o `slide_adjust.svg` fornecido, com bolinha e preenchimento dinamicos.
 
 Clicar em um preset carrega seus ajustes na demonstracao. Ao alterar esses ajustes nas abas principais, SALVAR AJUSTES atualiza tambem o preset selecionado. A miniatura usa as imagens e cores salvas desse preset. Presets antigos conservam o visual ao migrar para os novos campos independentes.
 

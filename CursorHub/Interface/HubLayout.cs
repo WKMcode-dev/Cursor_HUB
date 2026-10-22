@@ -62,27 +62,17 @@ public partial class CursorHubGame
             root.Add(sections[i] = new Container { Position = new Vector2(264, 100), Size = new Vector2(235, 345) });
         }
         root.Add(Label("DESKTOP PERSONALIZATION", 27, 367, 9, Muted));
-        root.Add(Label("osu!framework / v0.9.0", 27, 384, 11));
+        root.Add(Label("osu!framework / v0.10.0", 27, 384, 11));
         root.Add(Label("CTRL + SHIFT + X  /  PARAR", 27, 410, 9, Muted));
 
         sections[1].Add(Label("APARENCIA", 0, 0, 11, Muted));
         AddSlider(sections[1], "Tamanho do cursor", 34, size, 8, 48, value => size = value, "px", sizeBinding);
-        sections[1].Add(Label("Cor de destaque", 0, 121, 14));
-        for (int i = 0; i < palette.Length; i++)
-        {
-            int index = i;
-            var swatch = MakeButton("", i * 51, 150, 38, () => colourIndex = index);
-            swatch.BackgroundColour = palette[i];
-            swatch.Height = 30;
-            sections[1].Add(swatch);
-        }
-        sections[1].Add(Label("Formato inicial: circular", 0, 210, 11, Muted));
+        sections[1].Add(cursorColours=new Container {Position=new Vector2(0,121),Size=new Vector2(235,95)});
 
         sections[2].Add(Label("RASTRO",0,0,11,Muted));
         AddSlider(sections[2],"Tamanho do rastro",24,trailSize,8,48,v=>trailSize=v,"px",trailSizeBinding);
         AddSlider(sections[2],"Duracao do rastro",108,lifetime,60,600,v=>lifetime=v,"ms",lifetimeBinding);
-        sections[2].Add(Label("Cor do rastro",0,198,12));
-        for(int i=0;i<palette.Length;i++){int c=i;var swatch=MakeButton("",i*51,222,38,()=>trailColourIndex=c);swatch.BackgroundColour=palette[i];swatch.Height=28;sections[2].Add(swatch);}
+        sections[2].Add(trailColours=new Container {Position=new Vector2(0,198),Size=new Vector2(235,54)});
 
         sections[3].Add(Label("ORCAMENTO DE RENDERIZACAO", 0, 0, 10, Muted));
         AddSlider(sections[3], "Limite de desenho", 28, selectedRate, 30, 360, value =>
@@ -130,6 +120,7 @@ public partial class CursorHubGame
         root.Add(playButton);
         InitializePresets(root);
         BuildCustomization(root);
+        RefreshColourControls();
         SelectSection(0);
         return root;
     }
@@ -137,10 +128,10 @@ public partial class CursorHubGame
     private void SelectSection(int index)
     {
 
-        currentSection = index;
+        currentSection = index;RefreshColourControls();
         if (hotspotDialog is not null) hotspotDialog.Alpha = 0;
         if (presetMenu is not null) presetMenu.Alpha = 0;
-        if (presetEditor is not null) presetEditor.Alpha = 0;
+        if (presetEditor is not null) ClosePresetEditor();
         trail.Clear();
         for (int i = 0; i < sections.Length; i++)
         {
@@ -182,7 +173,7 @@ public partial class CursorHubGame
             if(selected is not null){presets.Put(selected with {Settings=settings});RefreshPresets();}
             notice = selected is null?"Configuracoes salvas":"Preset e miniatura atualizados";
         }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { notice = "Nao foi possivel salvar"; }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException) { notice = "Nao foi possivel salvar: "+e.Message; }
         nextStatus = 0;
     }
 }

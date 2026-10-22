@@ -6,6 +6,7 @@
   <ItemGroup>
     <Compile Include="../Core/InterfaceViewport.cs" Link="InterfaceViewport.cs" />
     <Compile Include="../Core/PlaybackState.cs" Link="PlaybackState.cs" />
+    <Compile Include="../Core/ColourValue.cs" Link="ColourValue.cs" />
     <Compile Include="../Core/TrailBuffer.cs" Link="TrailBuffer.cs" />
     <Compile Include="../Windows/PixelAsset.cs" Link="PixelAsset.cs" />
     <Compile Include="../Windows/MouseHistory.cs" Link="MouseHistory.cs" />
