@@ -4,19 +4,6 @@
 
 **Personalize o cursor e o rastro do seu mouse. Dê movimento ao seu desktop.**
 
-[![Release oficial](https://img.shields.io/github/v/release/WKMcode-dev/Cursor_HUB?style=flat-square&color=71cad4&label=release)](https://github.com/WKMcode-dev/Cursor_HUB/releases/latest)
-[![Windows x64](https://img.shields.io/badge/Windows-x64-252b38?style=flat-square&logo=windows)](https://github.com/WKMcode-dev/Cursor_HUB/releases/latest)
-[![.NET 10](https://img.shields.io/badge/.NET-10-9988c7?style=flat-square&logo=dotnet)](https://dotnet.microsoft.com/)
-[![Verificação Windows](https://github.com/WKMcode-dev/Cursor_HUB/actions/workflows/release.yml/badge.svg)](https://github.com/WKMcode-dev/Cursor_HUB/actions/workflows/release.yml)
-
-### [↓ Baixar Cursor Hub v0.10.1 para Windows](https://github.com/WKMcode-dev/Cursor_HUB/releases/download/v0.10.1/CursorHub-0.10.1-win-x64.exe)
-
-Um executável. Sem instalar .NET ou Visual Studio.
-
-[Funcionalidades](#o-que-você-pode-personalizar) · [Como usar](#comece-em-poucos-passos) · [Desempenho](#ajuste-ao-seu-computador) · [Código-fonte](#para-quem-desenvolve)
-
-</div>
-
 ---
 
 ## Um toque de osu! no seu desktop
