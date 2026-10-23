@@ -1,43 +1,75 @@
-# Cursor Hub 0.10.0
+# Cursor Hub — guia técnico
 
-Aplicativo Windows x64 em C#/.NET 10 e osu!framework, com interface Kode Mono e assets SVG.
+[← Apresentação e download](../README.md)
 
-## Executavel unico
+Aplicativo para Windows x64, desenvolvido em C# com .NET 10, osu!framework, Svg.Skia e recursos gráficos em SVG/PNG. A release oficial atual é a **v0.10.1**.
 
-Baixe `CursorHub-0.10.0-win-x64.exe` na release. Pode mover somente esse arquivo para outra pasta ou para a area de trabalho. Ele inclui o runtime e as bibliotecas; os arquivos de apoio sao preparados automaticamente no perfil do usuario. Nao exige .NET ou Visual Studio instalados. Feche qualquer versao anterior antes de iniciar.
+## Executar
 
-Presets, configuracoes e imagens importadas ficam em `%LOCALAPPDATA%\CursorHub`, portanto mover o executavel nao apaga os ajustes. Para transferir a colecao a outro computador, copie tambem esses dados.
-
-## Personalizacao e presets
-
-CURSOR e RASTRO tem tamanhos e cores independentes. Cada um aceita PNG/SVG ou formato circular. O editor de imagens permite giro em passos de 15 graus e inversao horizontal/vertical. No cursor, clique ou arraste a mira para selecionar o hotspot. As imagens mantem sua propria cor; a paleta se aplica ao formato circular.
-
-No menu de tres pontos do preset, EDITAR abre abas CURSOR, RASTRO e AJUSTES. Edite nome, imagens, tamanhos, cores, hotspot, duracao, Hz e economia; SALVAR PRESET persiste todos os campos e atualiza a miniatura. CANCELAR descarta as mudancas do editor. As cores podem vir da paleta padrao ou do seletor RGB nativo. Os controles de cor aparecem apenas no formato circular; PNG/SVG preservam as cores da imagem. A galeria mostra somente os presets salvos e um card NOVO, sem placeholders vazios.
-
-Os controles de tamanho, duracao e Hz usam o `slide_adjust.svg` fornecido, com bolinha e preenchimento dinamicos.
-
-Clicar em um preset carrega seus ajustes na demonstracao. Ao alterar esses ajustes nas abas principais, SALVAR AJUSTES atualiza tambem o preset selecionado. A miniatura usa as imagens e cores salvas desse preset. Presets antigos conservam o visual ao migrar para os novos campos independentes.
-
-PLAY ativa os efeitos no desktop. STOP, Ctrl+Shift+X ou fechar o app solicita sua interrupcao e a restauracao do cursor. Para aplicar novos ajustes a um efeito ja ativo, pare e pressione PLAY novamente.
-
-## Janela e desempenho
-
-Os controles geometricos ficam no recorte superior; Play/Stop fica no inferior direito. Maximizar preserva a proporcao da interface e o tamanho fisico do cursor. O tema muda imediatamente.
-
-A captura usa historico real do Windows e um buffer fixo de particulas. O limite pode ser 256, 512 ou 1024. A camada nativa usa alfa por pixel, recebe somente a area do rastro e cresce conforme a trajetoria, com limite de memoria. Depois que o rastro expira, a camada deixa de ser redesenhada ate haver movimento. O limite de desenho e configuravel entre 30 e 360 Hz; a economia reduz a interface parada a 15 Hz.
-
-A compatibilidade com aplicativos que desenham seu proprio cursor, jogos em tela cheia exclusiva e areas seguras do Windows nao e garantida. Consumo e latencia variam com o hardware.
-
-## Executar o codigo-fonte
-
-Com o SDK .NET 10 no Windows:
+Na raiz do repositório, com o SDK .NET 10 instalado no Windows:
 
 ```powershell
 dotnet run --project CursorHub/CursorHub.csproj
 ```
 
-A execucao pelo codigo-fonte usa a pasta Assets. O workflow incorpora esses assets e publica o executavel unico com bibliotecas nativas incluidas. A fonte Kode Mono acompanha a licenca OFL; o atlas pode ser regenerado por Tools/Build-Font.py com Pillow 12.1.0.
+Para as verificações de lógica:
 
-## Verificacao
+```powershell
+dotnet run --project CursorHub/Checks/Checks.csproj -c Release
+```
 
-O workflow testa o executavel copiado para uma pasta que contem apenas ele. Os testes incluem abertura/cancelamento do seletor de arquivos, composicao do rastro sobre janelas independentes, Play/Stop rapido, interface nos dois temas, restauracao/maximizacao, migracao de presets, tamanhos independentes, edicao completa e recarga dos dados salvos. Capturas ficam nos artifacts de verificacao do GitHub Actions.
+## Estrutura
+
+| Caminho | Responsabilidade |
+| :--- | :--- |
+| `CursorHubGame.cs` | Ciclo da aplicação, demonstração e integração com os efeitos globais. |
+| `Interface/` | Layout, controles, temas, presets e persistência dos ajustes. |
+| `Core/` | Trajetória do rastro, estados de reprodução, cores e escala da interface. |
+| `Windows/` | Cursor nativo, sobreposição, histórico do mouse, seletores e imagens. |
+| `Assets/` | Recursos da interface e atlas da fonte Kode Mono. |
+| `Checks/` | Verificações de lógica e matriz de estados/trajetórias. |
+| `Verification.cs`, `PresetVerification.cs` | Integração e interação automatizada no Windows. |
+| `Tools/` | Fontes gráficas e ferramentas de geração de recursos. |
+
+## Presets e salvamento
+
+Cada preset guarda cursor e rastro com tamanhos, imagens e cores independentes, além de hotspot, duração, limite de desenho e economia. A galeria mostra os presets existentes e um único card **NOVO**.
+
+O menu de três pontos abre as ações de usar, editar e excluir. O editor tem abas **CURSOR**, **RASTRO** e **AJUSTES**. Tanto **SALVAR PRESET** no editor quanto o botão lateral salvam o rascunho aberto. Sem seleção, o botão lateral abre a criação de um novo preset.
+
+A miniatura do preset selecionado usa os ajustes atuais ao voltar à galeria. Para persistir alterações feitas nas abas principais, use **SALVAR PRESET**. Cancelar o editor descarta o rascunho. Erros de gravação aparecem no editor e permitem tentar novamente.
+
+Imagens PNG/SVG preservam suas cores; os seletores de cor aparecem apenas no formato circular. O editor de imagem permite rotação em passos de 15 graus, inversão e definição do hotspot por clique ou arraste.
+
+## Dados locais
+
+Os dados ficam em `%LOCALAPPDATA%\CursorHub`: presets, configurações, preferências, imagens importadas e cache de recursos. Mover apenas o executável não remove esses dados. Para migrar a coleção, copie também a pasta de dados.
+
+## Efeitos e desempenho
+
+**PLAY** ativa os efeitos; **STOP**, **Ctrl + Shift + X** ou fechar o aplicativo solicita a interrupção e restauração do cursor. Mudanças em um efeito já ativo devem ser aplicadas com STOP e PLAY.
+
+A captura pode recuperar pontos do histórico real do Windows. O rastro usa buffers limitados e uma camada nativa com alfa por pixel, dimensionada conforme a trajetória. Há orçamento de 256/512/1024 partículas, limite de desenho entre 30 e 360 Hz e economia da demonstração parada a 15 Hz.
+
+Maximizar preserva a proporção da interface e o tamanho físico do cursor. O tema é aplicado imediatamente. Compatibilidade com cursores próprios de outros aplicativos, tela cheia exclusiva e áreas seguras do Windows não é garantida.
+
+## Publicação
+
+O workflow [Windows portable release](../.github/workflows/release.yml) incorpora os recursos e publica para `win-x64` com runtime e bibliotecas nativas incluídos. Apenas o executável é copiado para a pasta de teste antes da validação e do empacotamento.
+
+O workflow é acionado por mudanças em `CursorHub/RELEASE_VERSION`, mudanças no próprio workflow ou execução manual. O artefato final contém o `.exe` e `SHA256SUMS.txt`. A promoção de uma versão validada para release oficial é uma etapa editorial no GitHub.
+
+A execução pelo código-fonte usa `Assets/`; a distribuição incorpora os recursos em `AssetBundle.zip` e prepara o cache automaticamente. A fonte Kode Mono acompanha sua licença OFL. O atlas pode ser regenerado com `Tools/Build-Font.py` e Pillow 12.1.0.
+
+## Validação da v0.10.1
+
+[Execução aprovada e relatórios](https://github.com/WKMcode-dev/Cursor_HUB/actions/runs/39869850187).
+
+- Lógica: 199 cenários de estados e trajetórias, migração, RGB e limites de paginação.
+- Interface: cliques e digitação reais, sliders, presets, miniaturas, temas e escala.
+- Integração: diálogos RGB, seleção de SVG no gerenciador, rotação, inversão e hotspot.
+- Resiliência: nome inválido, imagem corrompida, importação atrasada, erro de gravação e nova tentativa.
+- Persistência: reabertura em outro processo preservando preset, seleção, cores, imagens e hotspot.
+- Desktop: composição sobre janelas independentes, tamanhos separados e ciclos rápidos de Play/Stop.
+
+Os artifacts de verificação incluem capturas e relatórios JSON. Esses testes não substituem validação em todos os monitores, drivers e jogos.
