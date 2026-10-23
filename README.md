@@ -35,7 +35,6 @@ Construído com **C#, .NET 10 e osu!framework**, com interface de recortes geom�
 
 ## Comece em poucos passos
 
-1. **[Baixe o executável da release oficial](https://github.com/WKMcode-dev/Cursor_HUB/releases/latest)** e abra o arquivo `.exe`. Feche qualquer versão anterior que esteja aberta.
 2. Clique em **+ NOVO** para criar um preset. Personalize as abas **CURSOR**, **RASTRO** e **AJUSTES**, dê um nome e clique em **SALVAR PRESET**.
 3. Mova o mouse na demonstração para conferir o resultado. O menu **⋮** de cada card permite **usar, editar ou excluir** o preset.
 4. Clique em **PLAY** para ativar os efeitos no computador. Use **STOP** ou **Ctrl + Shift + X** para interrompê-los.
@@ -70,7 +69,7 @@ Mover o executável não apaga esses dados. Para levar sua coleção a outro com
 
 ## Verificado antes de publicar
 
-A **v0.10.1** passou pela [validação automatizada no Windows](https://github.com/WKMcode-dev/Cursor_HUB/actions/runs/39869850187), executando o aplicativo empacotado em uma pasta contendo apenas o `.exe`.
+A **v0.10.1** passou pela [validação automatizada no Windows]
 
 Os testes cobrem cliques e digitação, criação/edição/exclusão de presets, seletores RGB reais, importação de SVG pelo gerenciador, imagens e hotspot, cores das miniaturas, paginação, temas, escala, minimizar/maximizar, Play/Stop e rastro sobre janelas independentes. Também verificam falha de gravação com nova tentativa e restauração dos dados ao reabrir o aplicativo em outro processo.
 
