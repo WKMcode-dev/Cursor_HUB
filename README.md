@@ -4,6 +4,8 @@
 
 **Personalize o cursor e o rastro do seu mouse. Dê movimento ao seu desktop.**
 
+</div>
+
 ---
 
 ## Um toque de osu! no seu desktop
@@ -35,9 +37,9 @@ Construído com **C#, .NET 10 e osu!framework**, com interface de recortes geom�
 
 ## Comece em poucos passos
 
-2. Clique em **+ NOVO** para criar um preset. Personalize as abas **CURSOR**, **RASTRO** e **AJUSTES**, dê um nome e clique em **SALVAR PRESET**.
-3. Mova o mouse na demonstração para conferir o resultado. O menu **⋮** de cada card permite **usar, editar ou excluir** o preset.
-4. Clique em **PLAY** para ativar os efeitos no computador. Use **STOP** ou **Ctrl + Shift + X** para interrompê-los.
+1. Clique em **+ NOVO** para criar um preset. Personalize as abas **CURSOR**, **RASTRO** e **AJUSTES**, dê um nome e clique em **SALVAR PRESET**.
+2. Mova o mouse na demonstração para conferir o resultado. O menu **⋮** de cada card permite **usar, editar ou excluir** o preset.
+3. Clique em **PLAY** para ativar os efeitos no computador. Use **STOP** ou **Ctrl + Shift + X** para interrompê-los.
 
 O botão lateral **SALVAR PRESET** também salva o preset aberto no editor. Sem um preset selecionado, ele abre a criação de um novo. Ao editar um preset selecionado nas abas principais, volte à galeria para ver sua miniatura atualizada e salve para manter as alterações.
 
@@ -69,7 +71,7 @@ Mover o executável não apaga esses dados. Para levar sua coleção a outro com
 
 ## Verificado antes de publicar
 
-A **v0.10.1** passou pela [validação automatizada no Windows]
+A **v0.10.1** passou pela validação automatizada no Windows.
 
 Os testes cobrem cliques e digitação, criação/edição/exclusão de presets, seletores RGB reais, importação de SVG pelo gerenciador, imagens e hotspot, cores das miniaturas, paginação, temas, escala, minimizar/maximizar, Play/Stop e rastro sobre janelas independentes. Também verificam falha de gravação com nova tentativa e restauração dos dados ao reabrir o aplicativo em outro processo.
 
